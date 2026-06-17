@@ -667,6 +667,113 @@ a { color: inherit; text-decoration: none; }
 .inline-select.cat-reunion       { background-color: #FEF2F2; color: #DC2626; }
 .inline-select.cat-autre         { background-color: #F1F3F5; color: #9CA3AF; }
 
+/* ════════════════════════════════════════════════════════════════════════
+   MODAL LIVRABLES
+   ════════════════════════════════════════════════════════════════════════ */
+.modal-wide { max-width: 680px; }
+
+.modal-body {
+  padding: .75rem 1.25rem;
+  overflow-y: auto;
+  max-height: calc(90vh - 130px);
+}
+
+.modal-footer {
+  padding: .75rem 1.25rem;
+  border-top: 1px solid var(--gray-200);
+  display: flex;
+  justify-content: flex-end;
+}
+
+.btn-sm { padding: .25rem .6rem; font-size: .75rem; }
+
+.deliv-client-section { margin-bottom: 1.25rem; }
+
+.deliv-client-title {
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+  font-weight: 700;
+  font-size: .9rem;
+  border-left: 4px solid;
+  padding-left: .6rem;
+  margin-bottom: .6rem;
+}
+
+.deliv-project-section {
+  margin-left: 1rem;
+  margin-bottom: .75rem;
+  border: 1px solid var(--gray-200);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+.deliv-project-title {
+  font-weight: 600;
+  font-size: .82rem;
+  padding: .4rem .75rem;
+  background: var(--gray-100);
+  border-bottom: 1px solid var(--gray-200);
+  color: var(--gray-700);
+}
+
+.deliv-list { padding: .35rem .5rem; display: flex; flex-direction: column; gap: .25rem; }
+
+.deliv-row {
+  display: flex;
+  align-items: center;
+  gap: .4rem;
+  padding: .2rem .25rem;
+  border-radius: var(--radius);
+}
+.deliv-row:hover { background: var(--gray-50); }
+.deliv-icon { font-size: .8rem; flex-shrink: 0; }
+
+.deliv-name-input {
+  flex: 1;
+  border: 1px solid transparent;
+  border-radius: var(--radius);
+  padding: .3rem .5rem;
+  font-size: .82rem;
+  background: transparent;
+  transition: border-color .15s, background .15s;
+}
+.deliv-name-input:focus {
+  outline: none;
+  border-color: var(--blue);
+  background: var(--white);
+  box-shadow: 0 0 0 3px rgba(24,95,165,.1);
+}
+
+.deliv-task-count {
+  font-size: .72rem;
+  color: var(--gray-500);
+  white-space: nowrap;
+  min-width: 50px;
+  text-align: right;
+}
+
+.deliv-add-row {
+  display: flex;
+  gap: .4rem;
+  padding: .4rem .5rem;
+  border-top: 1px solid var(--gray-100);
+  background: var(--gray-50);
+}
+
+.deliv-new-input {
+  flex: 1;
+  border: 1px solid var(--gray-300);
+  border-radius: var(--radius);
+  padding: .3rem .5rem;
+  font-size: .82rem;
+}
+.deliv-new-input:focus {
+  outline: none;
+  border-color: var(--blue);
+  box-shadow: 0 0 0 3px rgba(24,95,165,.1);
+}
+
 /* ── Scrollbar ─────────────────────────────────────────────────────────── */
 ::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }

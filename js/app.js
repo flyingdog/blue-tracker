@@ -354,6 +354,140 @@ const App = (() => {
     overlay.innerHTML = '';
   }
 
+  // ── Modal gestion des livrables ───────────────────────────────────────────
+  function openDeliverablesModal() {
+    const overlay = $modal();
+    overlay.innerHTML = '';
+    overlay.classList.remove('hidden');
+
+    const modal = document.createElement('div');
+    modal.className = 'modal modal-wide';
+
+    function render() {
+      modal.innerHTML = `
+        <div class="modal-header">
+          <h2>📦 Gestion des livrables</h2>
+          <button class="modal-close" aria-label="Fermer">✕</button>
+        </div>
+        <div class="modal-body deliverables-body">
+          ${state.clients.map(client => {
+            const projects = state.projects.filter(p => p.clientId === client.id);
+            if (!projects.length) return '';
+            return `
+              <div class="deliv-client-section">
+                <div class="deliv-client-title" style="border-left-color:${client.color}">
+                  <span class="tree-client-dot" style="background:${client.color}"></span>
+                  ${client.name}
+                </div>
+                ${projects.map(proj => {
+                  const delivs = state.deliverables.filter(d => d.projectId === proj.id);
+                  return `
+                    <div class="deliv-project-section">
+                      <div class="deliv-project-title">${proj.name}</div>
+                      <div class="deliv-list" data-project="${proj.id}">
+                        ${delivs.map(d => {
+                          const taskCount = state.tasks.filter(t => t.deliverableId === d.id).length;
+                          return `
+                            <div class="deliv-row" data-id="${d.id}">
+                              <span class="deliv-icon">📦</span>
+                              <input class="deliv-name-input" type="text" value="${d.name}" data-id="${d.id}">
+                              <span class="deliv-task-count" title="${taskCount} tâche(s)">${taskCount} tâche${taskCount > 1 ? 's' : ''}</span>
+                              <button class="deliv-save-btn btn btn-primary btn-sm" data-id="${d.id}">✓</button>
+                              <button class="deliv-delete-btn btn btn-danger btn-sm" data-id="${d.id}" ${taskCount > 0 ? 'title="Supprimer les tâches liées d\'abord"' : ''}>✕</button>
+                            </div>`;
+                        }).join('')}
+                      </div>
+                      <div class="deliv-add-row">
+                        <input class="deliv-new-input" type="text" placeholder="Nouveau livrable…" data-project="${proj.id}">
+                        <button class="deliv-add-btn btn btn-primary btn-sm" data-project="${proj.id}">+ Ajouter</button>
+                      </div>
+                    </div>`;
+                }).join('')}
+              </div>`;
+          }).join('')}
+          ${state.clients.length === 0 ? '<p class="empty-state">Aucun client. Créez d\'abord un client et un projet.</p>' : ''}
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary modal-cancel">Fermer</button>
+        </div>
+      `;
+
+      modal.querySelector('.modal-close').addEventListener('click', closeModal);
+      modal.querySelector('.modal-cancel').addEventListener('click', closeModal);
+      overlay.addEventListener('click', e => { if (e.target === overlay) closeModal(); });
+
+      // Sauvegarder un livrable renommé
+      modal.querySelectorAll('.deliv-save-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const id = btn.dataset.id;
+          const input = modal.querySelector(`.deliv-name-input[data-id="${id}"]`);
+          const deliv = state.deliverables.find(d => d.id === id);
+          if (deliv && input.value.trim()) {
+            deliv.name = input.value.trim();
+            markDirty();
+            renderView();
+            btn.textContent = '✓';
+            btn.style.background = 'var(--green)';
+            setTimeout(() => { btn.style.background = ''; }, 800);
+          }
+        });
+      });
+
+      // Supprimer un livrable
+      modal.querySelectorAll('.deliv-delete-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const id = btn.dataset.id;
+          const taskCount = state.tasks.filter(t => t.deliverableId === id).length;
+          if (taskCount > 0) {
+            alert(`Ce livrable contient ${taskCount} tâche(s). Retirez-les d'abord.`);
+            return;
+          }
+          if (confirm('Supprimer ce livrable ?')) {
+            state.deliverables = state.deliverables.filter(d => d.id !== id);
+            markDirty();
+            renderView();
+            render();
+          }
+        });
+      });
+
+      // Ajouter un livrable
+      modal.querySelectorAll('.deliv-add-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const projectId = btn.dataset.project;
+          const input = modal.querySelector(`.deliv-new-input[data-project="${projectId}"]`);
+          const name = input.value.trim();
+          if (!name) { input.focus(); return; }
+          state.deliverables.push({ id: uid(), name, projectId });
+          markDirty();
+          renderView();
+          render();
+        });
+      });
+
+      // Ajouter avec Entrée
+      modal.querySelectorAll('.deliv-new-input').forEach(input => {
+        input.addEventListener('keydown', e => {
+          if (e.key === 'Enter') {
+            modal.querySelector(`.deliv-add-btn[data-project="${input.dataset.project}"]`).click();
+          }
+        });
+      });
+
+      // Sauvegarder avec Entrée sur un champ de renommage
+      modal.querySelectorAll('.deliv-name-input').forEach(input => {
+        input.addEventListener('keydown', e => {
+          if (e.key === 'Enter') {
+            modal.querySelector(`.deliv-save-btn[data-id="${input.dataset.id}"]`).click();
+          }
+        });
+      });
+    }
+
+    render();
+    overlay.appendChild(modal);
+  }
+
   // ── Auth UI ─────────────────────────────────────────────────────────────────
   function updateAuthUI(connected) {
     const btn = $('auth-btn');
@@ -399,6 +533,7 @@ const App = (() => {
     $('add-task-btn').addEventListener('click', () => openTaskModal(null));
     $('add-client-btn').addEventListener('click', () => openClientModal(null));
     $('add-project-btn').addEventListener('click', () => openProjectModal(null));
+    $('manage-deliverables-btn').addEventListener('click', () => openDeliverablesModal());
 
     // Auth button
     $('auth-btn').addEventListener('click', () => {
