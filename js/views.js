@@ -300,8 +300,8 @@ const Views = (() => {
 
     const nameCell = document.createElement('span');
     nameCell.className = 'list-name';
-    nameCell.innerHTML = `<span class="list-name-line">${task.name}</span>${task.notes ? `<span class="task-notes">${task.notes}</span>` : ''}`;
-    nameCell.querySelector('.list-name-line').addEventListener('click', () => App.openTaskModal(task.id));
+    nameCell.innerHTML = `<span class="list-name-line"><span class="list-name-text">${task.name}</span></span>${task.notes ? `<span class="task-notes">${task.notes}</span>` : ''}`;
+    nameCell.querySelector('.list-name-text').addEventListener('click', () => App.openTaskModal(task.id));
 
     const editBtn = document.createElement('button');
     editBtn.className = 'list-edit-btn icon-btn';
