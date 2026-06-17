@@ -10,7 +10,7 @@
   <!-- Favicon inline SVG -->
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%23185FA5'/><text x='16' y='22' text-anchor='middle' fill='white' font-size='18' font-family='system-ui' font-weight='700'>B</text></svg>">
 
-  <link rel="stylesheet" href="css/style.css?v=13">
+  <link rel="stylesheet" href="css/style.css?v=14">
 
   <!-- Markdown parser -->
   <script src="https://cdn.jsdelivr.net/npm/marked@9/marked.min.js"></script>
@@ -83,10 +83,15 @@
     <button id="filter-reset"    class="filter-reset" title="Réinitialiser les filtres">✕ Réinitialiser</button>
   </div>
 
-  <!-- ── View container ─────────────────────────────────────────────────── -->
-  <main class="app-main" id="view-container" aria-live="polite">
-    <!-- Rendered by JS -->
-  </main>
+  <!-- ── App body : master + detail ────────────────────────────────────── -->
+  <div class="app-body">
+    <main class="app-main" id="view-container" aria-live="polite">
+      <!-- Rendered by JS -->
+    </main>
+    <aside id="task-detail" class="task-detail closed" aria-label="Détail de la tâche">
+      <!-- Rendered by JS -->
+    </aside>
+  </div>
 
 </div>
 

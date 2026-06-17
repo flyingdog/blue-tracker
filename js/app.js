@@ -308,92 +308,149 @@ const App = (() => {
     });
   }
 
-  // ── Modal tâche ──────────────────────────────────────────────────────────────
-  function openTaskModal(taskId, defaultProjectId) {
-    const task = taskId ? state.tasks.find(t => t.id === taskId) : null;
+  // ── Panneau détail tâche (Master-Detail Fiori) ──────────────────────────────
+  let currentDetailTaskId = null;
+
+  function openTaskDetail(taskId, defaultProjectId) {
+    currentDetailTaskId = taskId;
+    const panel = $('task-detail');
+    panel.classList.remove('closed');
+
+    const task  = taskId ? state.tasks.find(t => t.id === taskId) : null;
     const isNew = !task;
 
-    const overlay = $modal();
-    overlay.innerHTML = '';
-    overlay.classList.remove('hidden');
+    function clientColor(projectId) {
+      const proj   = state.projects.find(p => p.id === projectId);
+      const client = proj ? state.clients.find(c => c.id === proj.clientId) : null;
+      return client?.color || '#185FA5';
+    }
+    function projectLabel(projectId) {
+      const proj   = state.projects.find(p => p.id === projectId);
+      const client = proj ? state.clients.find(c => c.id === proj.clientId) : null;
+      return proj ? `${client?.name || ''} / ${proj.name}` : '';
+    }
 
-    const modal = document.createElement('div');
-    modal.className = 'modal';
-    modal.innerHTML = `
-      <div class="modal-header">
-        <h2>${isNew ? 'Nouvelle tâche' : 'Modifier la tâche'}</h2>
-        <button class="modal-close" aria-label="Fermer">✕</button>
+    const initProjId  = task?.projectId || defaultProjectId || '';
+    const borderColor = clientColor(initProjId);
+    const projText    = isNew ? '' : projectLabel(initProjId);
+
+    panel.innerHTML = `
+      <div class="td-header" style="border-left-color:${borderColor}">
+        <div class="td-header-info">
+          <span class="td-header-eyebrow">${isNew ? 'Nouvelle tâche' : 'Tâche'}</span>
+          ${projText ? `<span class="td-header-project">${projText}</span>` : ''}
+        </div>
+        <button class="td-close" title="Fermer" aria-label="Fermer le panneau">✕</button>
       </div>
-      <form id="task-form" class="modal-form">
-        <label>Nom *
-          <input name="name" type="text" required value="${task?.name || ''}" placeholder="Nom de la tâche">
-        </label>
-        <div class="form-row">
-          <label>Projet *
-            <select name="projectId" required>
+      <form id="task-detail-form" class="td-form">
+        <div class="td-section">
+          <label class="td-label">Nom *</label>
+          <input name="name" type="text" required class="td-input"
+            value="${(task?.name || '').replace(/"/g,'&quot;')}"
+            placeholder="Nom de la tâche">
+        </div>
+        <div class="td-row">
+          <div class="td-section">
+            <label class="td-label">Projet *</label>
+            <select name="projectId" required class="td-select">
               <option value="">— Choisir —</option>
               ${state.projects.map(p => {
                 const c = state.clients.find(c => c.id === p.clientId);
-                const sel = (task?.projectId || defaultProjectId) === p.id ? 'selected' : '';
+                const sel = initProjId === p.id ? 'selected' : '';
                 return `<option value="${p.id}" ${sel}>${c?.name} / ${p.name}</option>`;
               }).join('')}
             </select>
-          </label>
-          <label>Livrable
-            <select name="deliverableId">
-              <option value="">— Aucun —</option>
-              ${state.deliverables.map(d => {
-                const sel = task?.deliverableId === d.id ? 'selected' : '';
-                return `<option value="${d.id}" ${sel}>${d.name}</option>`;
-              }).join('')}
-            </select>
-          </label>
+          </div>
+          <div class="td-section">
+            <label class="td-label">Livrable</label>
+            <select name="deliverableId" class="td-select"></select>
+          </div>
         </div>
-        <div class="form-row">
-          <label>Catégorie *
-            <select name="category" class="inline-select" required>
+        <div class="td-row td-row-3">
+          <div class="td-section">
+            <label class="td-label">Catégorie *</label>
+            <select name="category" class="td-select inline-select" required>
               ${CATEGORIES.map(cat => `<option ${task?.category === cat ? 'selected' : ''}>${cat}</option>`).join('')}
             </select>
-          </label>
-          <label>Priorité *
-            <select name="priority" class="inline-select" required>
+          </div>
+          <div class="td-section">
+            <label class="td-label">Priorité *</label>
+            <select name="priority" class="td-select inline-select" required>
               ${PRIORITIES.map(p => `<option ${task?.priority === p ? 'selected' : ''}>${p}</option>`).join('')}
             </select>
-          </label>
-          <label>Statut *
-            <select name="status" class="inline-select" required>
+          </div>
+          <div class="td-section">
+            <label class="td-label">Statut *</label>
+            <select name="status" class="td-select inline-select" required>
               ${STATUSES.map(s => `<option ${task?.status === s ? 'selected' : ''}>${s}</option>`).join('')}
             </select>
-          </label>
+          </div>
         </div>
-        <label>Deadline
-          <input name="deadline" type="date" value="${task?.deadline || ''}">
-        </label>
-        <div class="form-notes">
+        <div class="td-section">
+          <label class="td-label">Deadline</label>
+          <input name="deadline" type="date" class="td-input" value="${task?.deadline || ''}">
+        </div>
+        <div class="td-section">
           <div class="notes-editor-header">
-            <span>Notes</span>
+            <span class="td-label">Notes</span>
             <div class="notes-tab-group">
               <button type="button" class="notes-tab active" data-ntab="edit">Markdown</button>
               <button type="button" class="notes-tab" data-ntab="preview">Aperçu</button>
             </div>
           </div>
-          <textarea name="notes" class="notes-textarea" placeholder="Remarques, contexte… (Markdown supporté)">${(task?.notes || '').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</textarea>
+          <textarea name="notes" class="notes-textarea" style="min-height:160px"
+            placeholder="Remarques, contexte… (Markdown supporté)">${(task?.notes || '').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</textarea>
           <div class="notes-preview-pane hidden"></div>
         </div>
-        <div class="form-actions">
-          ${!isNew ? `<button type="button" class="btn btn-danger" id="task-delete-btn">Supprimer</button>` : ''}
-          <button type="button" class="btn btn-secondary modal-cancel">Annuler</button>
-          <button type="submit" class="btn btn-primary">${isNew ? 'Créer' : 'Enregistrer'}</button>
+        <div class="td-actions">
+          ${!isNew ? `<button type="button" class="btn btn-danger td-delete-btn">Supprimer</button>` : ''}
+          <div class="td-actions-right">
+            <button type="button" class="btn btn-secondary td-cancel-btn">Annuler</button>
+            <button type="submit" class="btn btn-primary">${isNew ? 'Créer' : 'Enregistrer'}</button>
+          </div>
         </div>
       </form>
     `;
 
-    // Onglets Markdown / Aperçu des notes
-    const notesTextarea = modal.querySelector('.notes-textarea');
-    const notesPreview  = modal.querySelector('.notes-preview-pane');
-    modal.querySelectorAll('[data-ntab]').forEach(tab => {
+    const form       = panel.querySelector('#task-detail-form');
+    const projectSel = form.querySelector('[name="projectId"]');
+    const delivSel   = form.querySelector('[name="deliverableId"]');
+
+    function refreshDeliverables(projectId) {
+      const current = task?.deliverableId || delivSel.value || '';
+      delivSel.innerHTML = '<option value="">— Aucun —</option>';
+      state.deliverables
+        .filter(d => !projectId || d.projectId === projectId)
+        .forEach(d => {
+          const o = document.createElement('option');
+          o.value = d.id; o.textContent = d.name;
+          if (d.id === current) o.selected = true;
+          delivSel.appendChild(o);
+        });
+    }
+    refreshDeliverables(projectSel.value);
+
+    projectSel.addEventListener('change', () => {
+      refreshDeliverables(projectSel.value);
+      panel.querySelector('.td-header').style.borderLeftColor = clientColor(projectSel.value);
+      const info = panel.querySelector('.td-header-info');
+      const label = projectLabel(projectSel.value);
+      let projEl = info.querySelector('.td-header-project');
+      if (label) {
+        if (!projEl) { projEl = document.createElement('span'); projEl.className = 'td-header-project'; info.appendChild(projEl); }
+        projEl.textContent = label;
+      } else if (projEl) projEl.remove();
+    });
+
+    colorSelect(form.querySelector('[name="category"]'), 'category');
+    colorSelect(form.querySelector('[name="priority"]'),  'priority');
+    colorSelect(form.querySelector('[name="status"]'),    'status');
+
+    const notesTextarea = form.querySelector('.notes-textarea');
+    const notesPreview  = form.querySelector('.notes-preview-pane');
+    form.querySelectorAll('[data-ntab]').forEach(tab => {
       tab.addEventListener('click', () => {
-        modal.querySelectorAll('[data-ntab]').forEach(t => t.classList.remove('active'));
+        form.querySelectorAll('[data-ntab]').forEach(t => t.classList.remove('active'));
         tab.classList.add('active');
         if (tab.dataset.ntab === 'preview') {
           notesPreview.innerHTML = (typeof renderMarkdown !== 'undefined')
@@ -408,59 +465,42 @@ const App = (() => {
       });
     });
 
-    // Appliquer les couleurs aux selects inline du modal
-    colorSelect(modal.querySelector('[name="category"]'), 'category');
-    colorSelect(modal.querySelector('[name="priority"]'),  'priority');
-    colorSelect(modal.querySelector('[name="status"]'),    'status');
+    panel.querySelector('.td-close').addEventListener('click', closeTaskDetail);
+    form.querySelector('.td-cancel-btn')?.addEventListener('click', closeTaskDetail);
 
-    // Update deliverable options when project changes
-    const projectSel = modal.querySelector('[name="projectId"]');
-    const delivSel   = modal.querySelector('[name="deliverableId"]');
-    function refreshDeliverables(projectId) {
-      const current = delivSel.value;
-      delivSel.innerHTML = '<option value="">— Aucun —</option>';
-      state.deliverables
-        .filter(d => !projectId || d.projectId === projectId)
-        .forEach(d => {
-          const o = document.createElement('option');
-          o.value = d.id; o.textContent = d.name;
-          if (d.id === current) o.selected = true;
-          delivSel.appendChild(o);
-        });
-    }
-    projectSel.addEventListener('change', () => refreshDeliverables(projectSel.value));
-    refreshDeliverables(projectSel.value);
+    form.querySelector('.td-delete-btn')?.addEventListener('click', () => {
+      if (confirm(`Supprimer « ${task.name} » ?`)) {
+        state.tasks = state.tasks.filter(t => t.id !== taskId);
+        markDirty();
+        closeTaskDetail();
+        renderView();
+      }
+    });
 
-    modal.querySelector('.modal-close').addEventListener('click', closeModal);
-    modal.querySelector('.modal-cancel').addEventListener('click', closeModal);
-    overlay.addEventListener('click', e => { if (e.target === overlay) closeModal(); });
-
-    modal.querySelector('#task-form').addEventListener('submit', e => {
+    form.addEventListener('submit', e => {
       e.preventDefault();
-      const fd = new FormData(e.target);
+      const fd   = new FormData(e.target);
       const data = Object.fromEntries(fd.entries());
       if (isNew) {
         state.tasks.push({ id: uid(), ...data, deliverableId: data.deliverableId || null, notes: data.notes || '' });
+        markDirty();
+        closeTaskDetail();
+        renderView();
       } else {
         Object.assign(task, { ...data, deliverableId: data.deliverableId || null });
+        markDirty();
+        renderView();
       }
-      markDirty();
-      closeModal();
-      renderView();
     });
 
-    if (!isNew) {
-      modal.querySelector('#task-delete-btn')?.addEventListener('click', () => {
-        if (confirm(`Supprimer « ${task.name} » ?`)) {
-          state.tasks = state.tasks.filter(t => t.id !== taskId);
-          markDirty();
-          closeModal();
-          renderView();
-        }
-      });
-    }
+    setTimeout(() => form.querySelector('[name="name"]')?.focus(), 60);
+  }
 
-    overlay.appendChild(modal);
+  function closeTaskDetail() {
+    currentDetailTaskId = null;
+    const panel = $('task-detail');
+    panel.classList.add('closed');
+    setTimeout(() => { if (panel.classList.contains('closed')) panel.innerHTML = ''; }, 250);
   }
 
   // ── Modal projet ─────────────────────────────────────────────────────────────
@@ -756,7 +796,7 @@ const App = (() => {
     });
 
     // Add buttons
-    $('add-task-btn').addEventListener('click', () => openTaskModal(null));
+    $('add-task-btn').addEventListener('click', () => openTaskDetail(null));
     $('add-client-btn').addEventListener('click', () => openClientModal(null));
     $('add-project-btn').addEventListener('click', () => openProjectModal(null));
     $('manage-deliverables-btn').addEventListener('click', () => openDeliverablesModal());
@@ -768,9 +808,9 @@ const App = (() => {
       updateAuthUI(Storage.isConnected);
     });
 
-    // Keyboard shortcut: Escape closes modal
+    // Keyboard shortcut: Escape ferme modal ou panneau détail
     document.addEventListener('keydown', e => {
-      if (e.key === 'Escape') closeModal();
+      if (e.key === 'Escape') { closeModal(); closeTaskDetail(); }
     });
 
     buildFilterBar();
@@ -785,7 +825,7 @@ const App = (() => {
   }
 
   // Public surface used by Views
-  return { init, openTaskModal, openProjectModal, openClientModal, updateTaskField, openViewSettingsModal, sortByHeader };
+  return { init, openTaskModal: openTaskDetail, openTaskDetail, openProjectModal, openClientModal, updateTaskField, openViewSettingsModal, sortByHeader };
 })();
 
 document.addEventListener('DOMContentLoaded', App.init);
