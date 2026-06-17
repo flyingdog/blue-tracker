@@ -26,8 +26,8 @@ const App = (() => {
   let currentView = 'list';
   let filters = {};
   let listOptions = {
-    columns:     { client: true, project: true, deliverable: true, category: true, priority: true, deadline: true },
-    columnOrder: ['client', 'project', 'deliverable', 'category', 'priority', 'deadline'],
+    columns:     { client: true, project: true, deliverable: true, category: true, priority: true, deadline: true, updated: true },
+    columnOrder: ['client', 'project', 'deliverable', 'category', 'priority', 'deadline', 'updated'],
     groupBy:     null,
     sortBy:      'deadline',
     sortDir:     'asc',
@@ -65,8 +65,8 @@ const App = (() => {
 
   // ── Paramètres de vue (modal Fiori) ──────────────────────────────────────
   const DEFAULT_OPTIONS = {
-    columns:     { client: true, project: true, deliverable: true, category: true, priority: true, deadline: true },
-    columnOrder: ['client', 'project', 'deliverable', 'category', 'priority', 'deadline'],
+    columns:     { client: true, project: true, deliverable: true, category: true, priority: true, deadline: true, updated: true },
+    columnOrder: ['client', 'project', 'deliverable', 'category', 'priority', 'deadline', 'updated'],
     groupBy:     null,
     sortBy:      'deadline',
     sortDir:     'asc',
@@ -74,6 +74,7 @@ const App = (() => {
 
   const SORT_OPTIONS = [
     { value: 'deadline',  label: 'Deadline' },
+    { value: 'updated',   label: 'MàJ' },
     { value: 'priority',  label: 'Priorité' },
     { value: 'status',    label: 'Statut' },
     { value: 'name',      label: 'Nom' },
@@ -487,10 +488,11 @@ const App = (() => {
       const fd   = new FormData(e.target);
       const data = Object.fromEntries(fd.entries());
       data.name  = nameVal;
+      const now  = new Date().toISOString();
       if (isNew) {
-        state.tasks.push({ id: uid(), ...data, deliverableId: data.deliverableId || null, notes: data.notes || '' });
+        state.tasks.push({ id: uid(), ...data, deliverableId: data.deliverableId || null, notes: data.notes || '', updatedAt: now });
       } else {
-        Object.assign(task, { ...data, deliverableId: data.deliverableId || null });
+        Object.assign(task, { ...data, deliverableId: data.deliverableId || null, updatedAt: now });
       }
       markDirty();
       renderView();
@@ -819,6 +821,7 @@ const App = (() => {
     const task = state.tasks.find(t => t.id === taskId);
     if (!task) return;
     task[field] = value;
+    task.updatedAt = new Date().toISOString();
     markDirty();
   }
 

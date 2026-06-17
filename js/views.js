@@ -13,6 +13,7 @@ const LIST_COLS = [
   { id: 'category',    label: 'Catégorie', width: '90px',  sort: 'category' },
   { id: 'priority',    label: 'Priorité',  width: '70px',  sort: 'priority' },
   { id: 'deadline',    label: 'Deadline',  width: '80px',  sort: 'deadline' },
+  { id: 'updated',     label: 'MàJ',       width: '62px',  sort: 'updated'  },
 ];
 
 const Views = (() => {
@@ -102,6 +103,34 @@ const Views = (() => {
       App.updateTaskField(task.id, 'deliverableId', e.target.value || null);
     });
     return sel;
+  }
+
+  function fmtUpdated(iso) {
+    if (!iso) return '';
+    const diff = Date.now() - new Date(iso).getTime();
+    const min  = diff / 60000;
+    const h    = diff / 3600000;
+    if (min < 5)  return '~0';
+    if (h   < 1.5) return '~1h';
+    if (h   < 8)   return `${Math.floor(h)}h`;
+
+    const now   = new Date();
+    const d     = new Date(iso);
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const dDay  = new Date(d.getFullYear(),   d.getMonth(),   d.getDate());
+    const diffDays = Math.round((today - dDay) / 86400000);
+
+    if (diffDays === 0) return 'auj.';
+    if (diffDays === 1) return 'hier';
+
+    const dow = now.getDay() || 7;
+    const mondayCurr = new Date(today); mondayCurr.setDate(today.getDate() - (dow - 1));
+    const mondayPrev = new Date(mondayCurr); mondayPrev.setDate(mondayCurr.getDate() - 7);
+
+    if (dDay >= mondayCurr) return 'sem.';
+    if (dDay >= mondayPrev) return 's-1';
+    if (d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth()) return 'mois';
+    return '>1m';
   }
 
   function fmtDate(d) {
@@ -223,6 +252,7 @@ const Views = (() => {
         case 'name':     va = a.name.toLowerCase();   vb = b.name.toLowerCase();   break;
         case 'client':   va = clientName(state, a.projectId).toLowerCase(); vb = clientName(state, b.projectId).toLowerCase(); break;
         case 'project':  va = projectName(state, a.projectId).toLowerCase(); vb = projectName(state, b.projectId).toLowerCase(); break;
+        case 'updated':  va = a.updatedAt || ''; vb = b.updatedAt || ''; break;
         default: { // deadline: overdue first, then by date, then priority
           const aO = isOverdue(a.deadline, a.status) ? 0 : 1;
           const bO = isOverdue(b.deadline, b.status) ? 0 : 1;
@@ -367,6 +397,10 @@ const Views = (() => {
         case 'deadline':
           c.className = `list-deadline${overdue ? ' overdue' : ''}`;
           c.textContent = fmtDate(task.deadline);
+          break;
+        case 'updated':
+          c.className = 'list-updated';
+          c.textContent = fmtUpdated(task.updatedAt);
           break;
       }
       row.appendChild(c);
