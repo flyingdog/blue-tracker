@@ -1,0 +1,128 @@
+{
+  "clients": [
+    { "id": "c1", "name": "Eiffage", "color": "#1D9E75" },
+    { "id": "c2", "name": "FN Herstal", "color": "#185FA5" }
+  ],
+  "projects": [
+    { "id": "p1", "name": "OGA — SAP PPM", "clientId": "c1", "status": "active" },
+    { "id": "p2", "name": "DockMaster", "clientId": "c2", "status": "active" }
+  ],
+  "deliverables": [
+    { "id": "d1", "name": "Cadrage fonctionnel", "projectId": "p1" },
+    { "id": "d2", "name": "Spécification technique", "projectId": "p1" },
+    { "id": "d3", "name": "Module d'import", "projectId": "p2" },
+    { "id": "d4", "name": "Tableau de bord", "projectId": "p2" }
+  ],
+  "tasks": [
+    {
+      "id": "t1",
+      "name": "Atelier de lancement avec les MOA",
+      "projectId": "p1",
+      "deliverableId": "d1",
+      "category": "Atelier",
+      "priority": "Haute",
+      "status": "Terminé",
+      "deadline": "2026-06-10",
+      "notes": "Participants : équipe projet Eiffage + DSI"
+    },
+    {
+      "id": "t2",
+      "name": "Cartographie des processus PPM existants",
+      "projectId": "p1",
+      "deliverableId": "d1",
+      "category": "Investigation",
+      "priority": "Haute",
+      "status": "En cours",
+      "deadline": "2026-06-20",
+      "notes": "Interviews planifiées avec 4 chefs de projet"
+    },
+    {
+      "id": "t3",
+      "name": "Rédaction du cahier des charges fonctionnel",
+      "projectId": "p1",
+      "deliverableId": "d2",
+      "category": "Spec",
+      "priority": "Haute",
+      "status": "À faire",
+      "deadline": "2026-07-05",
+      "notes": ""
+    },
+    {
+      "id": "t4",
+      "name": "Revue du modèle de données SAP PPM",
+      "projectId": "p1",
+      "deliverableId": "d2",
+      "category": "Données",
+      "priority": "Moyenne",
+      "status": "À faire",
+      "deadline": "2026-07-10",
+      "notes": "Accès sandbox SAP en attente"
+    },
+    {
+      "id": "t5",
+      "name": "Réunion de suivi hebdo Eiffage",
+      "projectId": "p1",
+      "deliverableId": null,
+      "category": "Réunion",
+      "priority": "Basse",
+      "status": "En cours",
+      "deadline": "2026-06-18",
+      "notes": "Récurrent le mercredi à 10h"
+    },
+    {
+      "id": "t6",
+      "name": "Analyse du format d'import CSV DockMaster",
+      "projectId": "p2",
+      "deliverableId": "d3",
+      "category": "Investigation",
+      "priority": "Haute",
+      "status": "Terminé",
+      "deadline": "2026-06-05",
+      "notes": "Format validé avec l'équipe technique FN Herstal"
+    },
+    {
+      "id": "t7",
+      "name": "Développement du parseur d'import",
+      "projectId": "p2",
+      "deliverableId": "d3",
+      "category": "Données",
+      "priority": "Haute",
+      "status": "En cours",
+      "deadline": "2026-06-25",
+      "notes": "Prototype fonctionnel à valider"
+    },
+    {
+      "id": "t8",
+      "name": "Maquette du tableau de bord logistique",
+      "projectId": "p2",
+      "deliverableId": "d4",
+      "category": "Spec",
+      "priority": "Moyenne",
+      "status": "Bloqué",
+      "deadline": "2026-06-30",
+      "notes": "En attente de validation des KPIs par le client"
+    },
+    {
+      "id": "t9",
+      "name": "Tests d'intégration module import",
+      "projectId": "p2",
+      "deliverableId": "d3",
+      "category": "Investigation",
+      "priority": "Haute",
+      "status": "À faire",
+      "deadline": "2026-07-02",
+      "notes": ""
+    },
+    {
+      "id": "t10",
+      "name": "Facturation juin Eiffage",
+      "projectId": "p1",
+      "deliverableId": null,
+      "category": "Admin",
+      "priority": "Haute",
+      "status": "À faire",
+      "deadline": "2026-06-30",
+      "notes": ""
+    }
+  ]
+}
