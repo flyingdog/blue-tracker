@@ -113,69 +113,211 @@ a { color: inherit; text-decoration: none; }
 #auth-btn:hover { color: var(--white); border-color: rgba(255,255,255,.5); }
 #auth-btn.connected { color: #7EFFD0; border-color: #7EFFD0; }
 
-/* ── List options bar ───────────────────────────────────────────────────── */
-.list-options-bar {
-  background: var(--gray-50);
+/* ── List toolbar ────────────────────────────────────────────────────────── */
+.list-toolbar {
+  display: flex;
+  align-items: center;
+  padding: .4rem .75rem .4rem 1rem;
   border-bottom: 1px solid var(--gray-200);
-  padding: .4rem 1.25rem;
-  display: flex;
-  align-items: center;
-  gap: .75rem;
-  flex-wrap: wrap;
+  background: var(--white);
+  position: sticky;
+  top: 0;
+  z-index: 3;
+}
+.list-count {
+  flex: 1;
   font-size: .78rem;
+  color: var(--gray-500);
+  font-weight: 600;
 }
-.list-options-bar.hidden { display: none; }
+.list-settings-btn {
+  width: 28px; height: 28px;
+  border: 1px solid var(--gray-300);
+  border-radius: var(--radius);
+  color: var(--gray-600);
+  background: var(--white);
+  font-size: .95rem;
+  display: flex; align-items: center; justify-content: center;
+  transition: background .1s;
+}
+.list-settings-btn:hover { background: var(--gray-100); color: var(--blue); border-color: var(--blue); }
 
-.list-opt-section {
+/* ── List header row ─────────────────────────────────────────────────────── */
+.list-header-row {
+  display: grid;
+  align-items: center;
+  gap: .5rem;
+  padding: .3rem .75rem .3rem 0;
+  background: var(--gray-50);
+  border-bottom: 2px solid var(--gray-200);
+  position: sticky;
+  top: 37px;
+  z-index: 2;
+}
+.list-hcol {
+  font-size: .68rem;
+  font-weight: 700;
+  color: var(--gray-500);
+  text-transform: uppercase;
+  letter-spacing: .05em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding: 0 2px;
+}
+.list-hcol.sortable {
+  cursor: pointer;
   display: flex;
   align-items: center;
-  gap: .35rem;
+  gap: .2rem;
+  transition: color .1s;
 }
-.list-opt-label {
-  font-size: .72rem;
+.list-hcol.sortable:hover { color: var(--blue); }
+.list-hcol.sort-active    { color: var(--blue); }
+.list-sort-icon { font-size: .75rem; }
+
+/* ── View Settings modal ─────────────────────────────────────────────────── */
+.modal-view-settings {
+  width: 400px;
+  max-height: 82vh;
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  overflow: hidden;
+}
+.vs-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: .9rem 1.25rem .7rem;
+  border-bottom: 1px solid var(--gray-200);
+}
+.vs-header h2 { font-size: .95rem; }
+.vs-reset-btn {
+  font-size: .78rem;
+  color: var(--blue);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: .2rem .4rem;
+  border-radius: var(--radius);
+}
+.vs-reset-btn:hover { background: var(--blue-light); }
+.vs-tabs {
+  display: flex;
+  border-bottom: 2px solid var(--gray-200);
+  padding: 0 1rem;
+  gap: 0;
+  background: var(--white);
+}
+.vs-tab {
+  padding: .55rem .75rem;
+  font-size: .82rem;
   font-weight: 600;
+  color: var(--gray-500);
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -2px;
+  cursor: pointer;
+  transition: color .12s;
+}
+.vs-tab:hover { color: var(--blue); }
+.vs-tab.active { color: var(--blue); border-bottom-color: var(--blue); }
+.vs-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: .75rem 1.25rem;
+  min-height: 160px;
+}
+.vs-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: .5rem;
+  padding: .65rem 1.25rem;
+  border-top: 1px solid var(--gray-200);
+  background: var(--gray-50);
+}
+
+/* Columns tab */
+.vs-col-header {
+  font-size: .72rem;
+  font-weight: 700;
   color: var(--gray-500);
   text-transform: uppercase;
   letter-spacing: .04em;
-  white-space: nowrap;
+  padding: .1rem 0 .5rem;
+  border-bottom: 1px solid var(--gray-200);
+  margin-bottom: .1rem;
 }
-.list-options-bar select {
+.vs-col-list { display: flex; flex-direction: column; }
+.vs-col-row {
+  display: flex;
+  align-items: center;
+  padding: .45rem .25rem;
+  border-bottom: 1px solid var(--gray-100);
+}
+.vs-col-row:last-child { border-bottom: none; }
+.vs-col-check {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+  font-size: .84rem;
+  cursor: pointer;
+  user-select: none;
+}
+.vs-col-check input { accent-color: var(--blue); cursor: pointer; }
+.vs-col-arrows { display: flex; gap: .25rem; }
+.vs-arrow {
+  width: 22px; height: 22px;
   border: 1px solid var(--gray-300);
   border-radius: var(--radius);
-  padding: .2rem .45rem;
-  font-size: .78rem;
-  color: var(--gray-700);
-  background: var(--white);
-  height: 26px;
-}
-.list-options-bar select:focus { outline: 2px solid var(--blue); outline-offset: -1px; }
-
-.sort-dir-btn {
-  width: 26px; height: 26px;
-  border: 1px solid var(--gray-300);
-  border-radius: var(--radius);
-  font-size: .85rem;
-  color: var(--gray-700);
+  font-size: .72rem;
+  color: var(--gray-600);
   background: var(--white);
   display: flex; align-items: center; justify-content: center;
-  transition: background .12s;
+  transition: background .1s;
 }
-.sort-dir-btn:hover { background: var(--gray-100); }
+.vs-arrow:disabled { opacity: .3; cursor: default; }
+.vs-arrow:not(:disabled):hover { background: var(--gray-100); color: var(--blue); }
 
-.list-opt-sep {
-  width: 1px; height: 18px;
-  background: var(--gray-200);
-  margin: 0 .25rem;
+/* Sort tab */
+.vs-sort-row {
+  display: flex;
+  flex-direction: column;
+  gap: 1.1rem;
+  padding: .4rem 0;
 }
-
-.list-opt-cols { flex-wrap: wrap; gap: .25rem .5rem; }
-.col-toggle {
-  display: flex; align-items: center; gap: .25rem;
-  font-size: .75rem; color: var(--gray-700);
-  cursor: pointer; user-select: none;
-  white-space: nowrap;
+.vs-field-group { display: flex; flex-direction: column; gap: .4rem; }
+.vs-field-label {
+  font-size: .7rem;
+  font-weight: 700;
+  color: var(--gray-500);
+  text-transform: uppercase;
+  letter-spacing: .05em;
 }
-.col-toggle input { cursor: pointer; accent-color: var(--blue); }
+.vs-field-group select {
+  border: 1px solid var(--gray-300);
+  border-radius: var(--radius);
+  padding: .35rem .5rem;
+  font-size: .84rem;
+  color: var(--gray-700);
+  background: var(--white);
+}
+.vs-radio-group {
+  display: flex;
+  gap: 1.25rem;
+}
+.vs-radio-label {
+  display: flex;
+  align-items: center;
+  gap: .35rem;
+  font-size: .84rem;
+  color: var(--gray-700);
+  cursor: pointer;
+}
+.vs-radio-label input { accent-color: var(--blue); cursor: pointer; }
 
 /* ── List group headers ──────────────────────────────────────────────────── */
 .list-group-header {
@@ -190,7 +332,7 @@ a { color: inherit; text-decoration: none; }
   font-weight: 700;
   color: var(--gray-700);
   position: sticky;
-  top: 0;
+  top: 75px;
   z-index: 1;
 }
 .list-group-header:first-child { border-top: none; }

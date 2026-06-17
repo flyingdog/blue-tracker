@@ -1,5 +1,14 @@
 // ─── Views: Liste, Kanban, Hiérarchie ─────────────────────────────────────
 
+const LIST_COLS = [
+  { id: 'client',      label: 'Client',    width: '90px',  sort: 'client'   },
+  { id: 'project',     label: 'Projet',    width: '130px', sort: 'project'  },
+  { id: 'deliverable', label: 'Livrable',  width: '44px',  sort: null       },
+  { id: 'category',    label: 'Catégorie', width: '90px',  sort: 'category' },
+  { id: 'priority',    label: 'Priorité',  width: '70px',  sort: 'priority' },
+  { id: 'deadline',    label: 'Deadline',  width: '80px',  sort: 'deadline' },
+];
+
 const Views = (() => {
 
   const STATUSES   = ['À faire', 'En cours', 'Bloqué', 'Terminé'];
@@ -220,25 +229,65 @@ const Views = (() => {
     }
   }
 
-  function buildListRow(task, state, vis, container) {
+  function buildGridTemplate(colOrder, vis) {
+    const toggleableWidths = colOrder.filter(id => vis[id]).map(id => {
+      const def = LIST_COLS.find(c => c.id === id);
+      return def ? def.width : '80px';
+    });
+    return `3px 90px 1fr ${toggleableWidths.join(' ')} 28px`;
+  }
+
+  function buildHeaderRow(colOrder, vis, sortBy, sortDir) {
+    const row = document.createElement('div');
+    row.className = 'list-header-row';
+    row.style.gridTemplateColumns = buildGridTemplate(colOrder, vis);
+
+    const spacer = document.createElement('span'); // color bar
+    row.appendChild(spacer);
+
+    // Statut (always, sortable)
+    const statusH = document.createElement('span');
+    statusH.className = `list-hcol sortable${sortBy === 'status' ? ' sort-active' : ''}`;
+    statusH.innerHTML = `Statut<span class="list-sort-icon">${sortBy === 'status' ? (sortDir === 'asc' ? ' ↑' : ' ↓') : ''}</span>`;
+    statusH.addEventListener('click', () => App.sortByHeader('status'));
+    row.appendChild(statusH);
+
+    // Nom (always, sortable)
+    const nameH = document.createElement('span');
+    nameH.className = `list-hcol sortable${sortBy === 'name' ? ' sort-active' : ''}`;
+    nameH.innerHTML = `Nom<span class="list-sort-icon">${sortBy === 'name' ? (sortDir === 'asc' ? ' ↑' : ' ↓') : ''}</span>`;
+    nameH.addEventListener('click', () => App.sortByHeader('name'));
+    row.appendChild(nameH);
+
+    // Toggleable columns in user-defined order
+    for (const id of colOrder) {
+      if (!vis[id]) continue;
+      const def = LIST_COLS.find(c => c.id === id);
+      if (!def) continue;
+      const h = document.createElement('span');
+      if (def.sort) {
+        h.className = `list-hcol sortable${sortBy === def.sort ? ' sort-active' : ''}`;
+        h.innerHTML = `${def.label}<span class="list-sort-icon">${sortBy === def.sort ? (sortDir === 'asc' ? ' ↑' : ' ↓') : ''}</span>`;
+        h.addEventListener('click', () => App.sortByHeader(def.sort));
+      } else {
+        h.className = 'list-hcol';
+        h.textContent = def.label;
+      }
+      row.appendChild(h);
+    }
+
+    const editSpacer = document.createElement('span'); // edit btn column
+    row.appendChild(editSpacer);
+
+    return row;
+  }
+
+  function buildListRow(task, state, vis, colOrder) {
     const row = document.createElement('div');
     const color = clientColor(state, task.projectId);
     const overdue = isOverdue(task.deadline, task.status);
 
-    // Build visible column widths dynamically
-    const colDefs = [
-      { id: 'status',      width: '90px',  always: true },
-      { id: 'name',        width: '1fr',   always: true },
-      { id: 'client',      width: '90px' },
-      { id: 'project',     width: '130px' },
-      { id: 'deliverable', width: '44px' },
-      { id: 'category',    width: '90px' },
-      { id: 'priority',    width: '70px' },
-      { id: 'deadline',    width: '80px' },
-      { id: 'edit',        width: '28px',  always: true },
-    ];
-    const visibleWidths = colDefs.filter(c => c.always || vis[c.id]).map(c => c.width);
-    row.style.gridTemplateColumns = `3px ${visibleWidths.join(' ')}`;
+    row.style.gridTemplateColumns = buildGridTemplate(colOrder, vis);
     row.className = `list-row status-${STATUS_CLASS[task.status]}`;
 
     const colorBar = document.createElement('span');
@@ -261,48 +310,45 @@ const Views = (() => {
 
     row.append(colorBar, statusCell, nameCell);
 
-    if (vis.client) {
+    for (const id of colOrder) {
+      if (!vis[id]) continue;
       const c = document.createElement('span');
-      c.className = 'list-client'; c.style.color = color;
-      c.textContent = clientName(state, task.projectId);
+      switch (id) {
+        case 'client':
+          c.className = 'list-client'; c.style.color = color;
+          c.textContent = clientName(state, task.projectId);
+          break;
+        case 'project':
+          c.className = 'list-project';
+          c.textContent = projectName(state, task.projectId);
+          break;
+        case 'deliverable':
+          c.className = 'list-deliv';
+          const tag = delivTag(task, state.deliverables);
+          if (tag) c.appendChild(tag);
+          break;
+        case 'category':
+          c.className = 'list-cat';
+          c.appendChild(categorySelect(task));
+          break;
+        case 'priority':
+          c.className = 'list-prio';
+          c.appendChild(prioritySelect(task));
+          break;
+        case 'deadline':
+          c.className = `list-deadline${overdue ? ' overdue' : ''}`;
+          c.textContent = fmtDate(task.deadline);
+          break;
+      }
       row.appendChild(c);
     }
-    if (vis.project) {
-      const c = document.createElement('span');
-      c.className = 'list-project';
-      c.textContent = projectName(state, task.projectId);
-      row.appendChild(c);
-    }
-    if (vis.deliverable) {
-      const c = document.createElement('span');
-      c.className = 'list-deliv';
-      const t = delivTag(task, state.deliverables);
-      if (t) c.appendChild(t);
-      row.appendChild(c);
-    }
-    if (vis.category) {
-      const c = document.createElement('span');
-      c.className = 'list-cat';
-      c.appendChild(categorySelect(task));
-      row.appendChild(c);
-    }
-    if (vis.priority) {
-      const c = document.createElement('span');
-      c.className = 'list-prio';
-      c.appendChild(prioritySelect(task));
-      row.appendChild(c);
-    }
-    if (vis.deadline) {
-      const c = document.createElement('span');
-      c.className = `list-deadline${overdue ? ' overdue' : ''}`;
-      c.textContent = fmtDate(task.deadline);
-      row.appendChild(c);
-    }
+
     row.appendChild(editBtn);
     return row;
   }
 
   function renderList(container, state, filters, opts = {}) {
+    const colOrder = opts.columnOrder || LIST_COLS.map(c => c.id);
     const vis = {
       client: true, project: true, deliverable: true,
       category: true, priority: true, deadline: true,
@@ -316,18 +362,38 @@ const Views = (() => {
     tasks = sortTasks(tasks, sortBy, sortDir, state);
 
     container.innerHTML = '';
-    if (!tasks.length) {
-      container.innerHTML = '<p class="empty-state">Aucune tâche ne correspond aux filtres.</p>';
-      return;
-    }
-
     const wrap = document.createElement('div');
     wrap.className = 'view-list';
 
+    // Toolbar
+    const toolbar = document.createElement('div');
+    toolbar.className = 'list-toolbar';
+    const countEl = document.createElement('span');
+    countEl.className = 'list-count';
+    countEl.textContent = `${tasks.length} tâche${tasks.length !== 1 ? 's' : ''}`;
+    const gearBtn = document.createElement('button');
+    gearBtn.className = 'list-settings-btn';
+    gearBtn.title = 'Paramètres de vue';
+    gearBtn.textContent = '⚙';
+    gearBtn.addEventListener('click', () => App.openViewSettingsModal());
+    toolbar.append(countEl, gearBtn);
+    wrap.appendChild(toolbar);
+
+    // Header row
+    wrap.appendChild(buildHeaderRow(colOrder, vis, sortBy, sortDir));
+
+    if (!tasks.length) {
+      const empty = document.createElement('p');
+      empty.className = 'empty-state';
+      empty.textContent = 'Aucune tâche ne correspond aux filtres.';
+      wrap.appendChild(empty);
+      container.appendChild(wrap);
+      return;
+    }
+
     if (!groupBy) {
-      tasks.forEach(t => wrap.appendChild(buildListRow(t, state, vis)));
+      tasks.forEach(t => wrap.appendChild(buildListRow(t, state, vis, colOrder)));
     } else {
-      // Group tasks
       const groups = new Map();
       tasks.forEach(t => {
         const key = groupLabel(t, groupBy, state);
@@ -337,16 +403,14 @@ const Views = (() => {
       groups.forEach((groupTasks, label) => {
         const header = document.createElement('div');
         header.className = 'list-group-header';
-        const gc = groupBy === 'client'
-          ? state.clients.find(c => c.name === label)
-          : null;
+        const gc = groupBy === 'client' ? state.clients.find(c => c.name === label) : null;
         header.innerHTML = `
           ${gc ? `<span class="list-group-dot" style="background:${gc.color}"></span>` : ''}
           <span class="list-group-label">${label}</span>
           <span class="list-group-count">${groupTasks.length}</span>
         `;
         wrap.appendChild(header);
-        groupTasks.forEach(t => wrap.appendChild(buildListRow(t, state, vis)));
+        groupTasks.forEach(t => wrap.appendChild(buildListRow(t, state, vis, colOrder)));
       });
     }
 

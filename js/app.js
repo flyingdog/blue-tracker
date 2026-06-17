@@ -26,10 +26,11 @@ const App = (() => {
   let currentView = 'list';
   let filters = {};
   let listOptions = {
-    columns: { client: true, project: true, deliverable: true, category: true, priority: true, deadline: true },
-    groupBy: null,
-    sortBy: 'deadline',
-    sortDir: 'asc',
+    columns:     { client: true, project: true, deliverable: true, category: true, priority: true, deadline: true },
+    columnOrder: ['client', 'project', 'deliverable', 'category', 'priority', 'deadline'],
+    groupBy:     null,
+    sortBy:      'deadline',
+    sortDir:     'asc',
   };
 
   // ── DOM refs ────────────────────────────────────────────────────────────────
@@ -49,7 +50,6 @@ const App = (() => {
   function setView(name) {
     currentView = name;
     document.querySelectorAll('.view-btn').forEach(b => b.classList.toggle('active', b.dataset.view === name));
-    $('list-options-bar').classList.toggle('hidden', name !== 'list');
     renderView();
   }
 
@@ -61,34 +61,191 @@ const App = (() => {
     else                               Views.renderHierarchy(container, state, filters);
   }
 
-  // ── Options barre liste ──────────────────────────────────────────────────────
-  function buildOptionsBar() {
-    const groupSel = $('opt-group-by');
-    const sortSel  = $('opt-sort-by');
-    const dirBtn   = $('opt-sort-dir');
+  // ── Paramètres de vue (modal Fiori) ──────────────────────────────────────
+  const DEFAULT_OPTIONS = {
+    columns:     { client: true, project: true, deliverable: true, category: true, priority: true, deadline: true },
+    columnOrder: ['client', 'project', 'deliverable', 'category', 'priority', 'deadline'],
+    groupBy:     null,
+    sortBy:      'deadline',
+    sortDir:     'asc',
+  };
 
-    groupSel.addEventListener('change', () => {
-      listOptions.groupBy = groupSel.value || null;
-      renderView();
-    });
+  const SORT_OPTIONS = [
+    { value: 'deadline',  label: 'Deadline' },
+    { value: 'priority',  label: 'Priorité' },
+    { value: 'status',    label: 'Statut' },
+    { value: 'name',      label: 'Nom' },
+    { value: 'client',    label: 'Client' },
+    { value: 'project',   label: 'Projet' },
+  ];
+  const GROUP_OPTIONS = [
+    { value: '',          label: '— Aucun —' },
+    { value: 'client',    label: 'Client' },
+    { value: 'project',   label: 'Projet' },
+    { value: 'status',    label: 'Statut' },
+    { value: 'category',  label: 'Catégorie' },
+    { value: 'priority',  label: 'Priorité' },
+  ];
 
-    sortSel.addEventListener('change', () => {
-      listOptions.sortBy = sortSel.value;
-      renderView();
-    });
+  function openViewSettingsModal() {
+    const overlay = $modal();
+    overlay.innerHTML = '';
+    overlay.classList.remove('hidden');
 
-    dirBtn.addEventListener('click', () => {
-      listOptions.sortDir = listOptions.sortDir === 'asc' ? 'desc' : 'asc';
-      dirBtn.textContent = listOptions.sortDir === 'asc' ? '↑' : '↓';
-      renderView();
-    });
+    let draftOrder = [...listOptions.columnOrder];
+    let draftCols  = { ...listOptions.columns };
+    let draftSort  = listOptions.sortBy;
+    let draftDir   = listOptions.sortDir;
+    let draftGroup = listOptions.groupBy || '';
+    let activeTab  = 'columns';
 
-    document.querySelectorAll('.col-toggle input').forEach(cb => {
-      cb.addEventListener('change', () => {
-        listOptions.columns[cb.dataset.col] = cb.checked;
-        renderView();
+    const modal = document.createElement('div');
+    modal.className = 'modal modal-view-settings';
+
+    function colLabel(id) {
+      return (typeof LIST_COLS !== 'undefined' ? LIST_COLS : []).find(c => c.id === id)?.label || id;
+    }
+
+    function renderTab() {
+      const body = modal.querySelector('.vs-body');
+      if (!body) return;
+
+      if (activeTab === 'columns') {
+        const vis = draftOrder.filter(id => draftCols[id]).length;
+        body.innerHTML = `
+          <div class="vs-col-header">Colonnes (${vis}/${draftOrder.length})</div>
+          <div class="vs-col-list">
+            ${draftOrder.map((id, i) => `
+              <div class="vs-col-row">
+                <label class="vs-col-check">
+                  <input type="checkbox" data-col="${id}" ${draftCols[id] ? 'checked' : ''}>
+                  ${colLabel(id)}
+                </label>
+                <div class="vs-col-arrows">
+                  <button class="vs-arrow" data-move="-1" data-col="${id}" ${i === 0 ? 'disabled' : ''}>↑</button>
+                  <button class="vs-arrow" data-move="1"  data-col="${id}" ${i === draftOrder.length - 1 ? 'disabled' : ''}>↓</button>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+        `;
+        body.querySelectorAll('.vs-col-check input').forEach(cb => {
+          cb.addEventListener('change', () => {
+            draftCols[cb.dataset.col] = cb.checked;
+            renderTab();
+          });
+        });
+        body.querySelectorAll('.vs-arrow').forEach(btn => {
+          btn.addEventListener('click', () => {
+            const id = btn.dataset.col;
+            const move = parseInt(btn.dataset.move);
+            const idx = draftOrder.indexOf(id);
+            const to = idx + move;
+            if (to < 0 || to >= draftOrder.length) return;
+            draftOrder.splice(idx, 1);
+            draftOrder.splice(to, 0, id);
+            renderTab();
+          });
+        });
+      }
+
+      if (activeTab === 'sort') {
+        body.innerHTML = `
+          <div class="vs-sort-row">
+            <div class="vs-field-group">
+              <span class="vs-field-label">Trier par</span>
+              <select id="vs-sort-by">
+                ${SORT_OPTIONS.map(o => `<option value="${o.value}" ${draftSort === o.value ? 'selected' : ''}>${o.label}</option>`).join('')}
+              </select>
+            </div>
+            <div class="vs-field-group">
+              <span class="vs-field-label">Ordre</span>
+              <div class="vs-radio-group">
+                <label class="vs-radio-label"><input type="radio" name="vs-dir" value="asc"  ${draftDir === 'asc'  ? 'checked' : ''}> Croissant</label>
+                <label class="vs-radio-label"><input type="radio" name="vs-dir" value="desc" ${draftDir === 'desc' ? 'checked' : ''}> Décroissant</label>
+              </div>
+            </div>
+          </div>
+        `;
+        body.querySelector('#vs-sort-by').addEventListener('change', e => { draftSort = e.target.value; });
+        body.querySelectorAll('[name="vs-dir"]').forEach(r => r.addEventListener('change', e => { draftDir = e.target.value; }));
+      }
+
+      if (activeTab === 'group') {
+        body.innerHTML = `
+          <div class="vs-sort-row">
+            <div class="vs-field-group">
+              <span class="vs-field-label">Regrouper par</span>
+              <select id="vs-group-by">
+                ${GROUP_OPTIONS.map(o => `<option value="${o.value}" ${draftGroup === o.value ? 'selected' : ''}>${o.label}</option>`).join('')}
+              </select>
+            </div>
+          </div>
+        `;
+        body.querySelector('#vs-group-by').addEventListener('change', e => { draftGroup = e.target.value; });
+      }
+    }
+
+    modal.innerHTML = `
+      <div class="modal-header vs-header">
+        <h2>Paramètres de vue</h2>
+        <button class="vs-reset-btn">Réinitialiser</button>
+      </div>
+      <div class="vs-tabs">
+        <button class="vs-tab active" data-tab="columns">Colonnes</button>
+        <button class="vs-tab" data-tab="sort">Tri</button>
+        <button class="vs-tab" data-tab="group">Regroupement</button>
+      </div>
+      <div class="vs-body"></div>
+      <div class="vs-footer">
+        <button class="btn btn-secondary vs-cancel">Annuler</button>
+        <button class="btn btn-primary vs-ok">OK</button>
+      </div>
+    `;
+
+    renderTab();
+
+    modal.querySelectorAll('.vs-tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        activeTab = tab.dataset.tab;
+        modal.querySelectorAll('.vs-tab').forEach(t => t.classList.toggle('active', t.dataset.tab === activeTab));
+        renderTab();
       });
     });
+
+    modal.querySelector('.vs-reset-btn').addEventListener('click', () => {
+      draftOrder = [...DEFAULT_OPTIONS.columnOrder];
+      draftCols  = { ...DEFAULT_OPTIONS.columns };
+      draftSort  = DEFAULT_OPTIONS.sortBy;
+      draftDir   = DEFAULT_OPTIONS.sortDir;
+      draftGroup = '';
+      modal.querySelectorAll('.vs-tab').forEach(t => t.classList.toggle('active', t.dataset.tab === activeTab));
+      renderTab();
+    });
+
+    modal.querySelector('.vs-cancel').addEventListener('click', closeModal);
+    overlay.addEventListener('click', e => { if (e.target === overlay) closeModal(); });
+    modal.querySelector('.vs-ok').addEventListener('click', () => {
+      listOptions.columnOrder = draftOrder;
+      listOptions.columns     = draftCols;
+      listOptions.sortBy      = draftSort;
+      listOptions.sortDir     = draftDir;
+      listOptions.groupBy     = draftGroup || null;
+      closeModal();
+      renderView();
+    });
+
+    overlay.appendChild(modal);
+  }
+
+  function sortByHeader(field) {
+    if (listOptions.sortBy === field) {
+      listOptions.sortDir = listOptions.sortDir === 'asc' ? 'desc' : 'asc';
+    } else {
+      listOptions.sortBy  = field;
+      listOptions.sortDir = 'asc';
+    }
+    renderView();
   }
 
   // ── Filtres ──────────────────────────────────────────────────────────────────
@@ -589,7 +746,6 @@ const App = (() => {
     });
 
     buildFilterBar();
-    buildOptionsBar();
     setView('list');
   }
 
@@ -601,7 +757,7 @@ const App = (() => {
   }
 
   // Public surface used by Views
-  return { init, openTaskModal, openProjectModal, openClientModal, updateTaskField };
+  return { init, openTaskModal, openProjectModal, openClientModal, updateTaskField, openViewSettingsModal, sortByHeader };
 })();
 
 document.addEventListener('DOMContentLoaded', App.init);
