@@ -333,6 +333,7 @@ const App = (() => {
     const color      = getColor(initProjId);
 
     const container = $view();
+    history.pushState({ taskDetail: true }, '', '#detail');
     document.querySelector('.filter-bar').style.display = 'none';
     container.className = 'view-task-detail';
     container.innerHTML = `
@@ -470,14 +471,14 @@ const App = (() => {
       });
     });
 
-    container.querySelector('#td-back').addEventListener('click', renderView);
-    form.querySelector('.td-cancel-btn').addEventListener('click', renderView);
+    container.querySelector('#td-back').addEventListener('click', () => history.back());
+    form.querySelector('.td-cancel-btn').addEventListener('click', () => history.back());
 
     form.querySelector('.td-delete-btn')?.addEventListener('click', () => {
       if (confirm(`Supprimer « ${task.name} » ?`)) {
         state.tasks = state.tasks.filter(t => t.id !== taskId);
         markDirty();
-        renderView();
+        history.back();
       }
     });
 
@@ -495,7 +496,7 @@ const App = (() => {
         Object.assign(task, { ...data, deliverableId: data.deliverableId || null, updatedAt: now });
       }
       markDirty();
-      renderView();
+      history.back();
     });
 
     setTimeout(() => container.querySelector('#td-name-input')?.focus(), 60);
@@ -811,6 +812,11 @@ const App = (() => {
     // Keyboard shortcut: Escape ferme modal (les autres vues gèrent leur retour)
     document.addEventListener('keydown', e => {
       if (e.key === 'Escape') closeModal();
+    });
+
+    // Bouton Back du navigateur : retour à la vue principale depuis le détail
+    window.addEventListener('popstate', () => {
+      if ($view().className === 'view-task-detail') renderView();
     });
 
     buildFilterBar();
