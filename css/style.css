@@ -636,6 +636,17 @@ a { color: inherit; text-decoration: none; }
 .inline-select:hover { box-shadow: 0 0 0 2px rgba(0,0,0,.15); }
 .inline-select:focus { outline: 2px solid var(--blue); outline-offset: 1px; }
 
+/* Dans le modal : taille adaptée au champ de formulaire */
+.modal-form .inline-select {
+  font-size: .85rem;
+  padding: .45rem .65rem;
+  padding-right: 1.6rem;
+  max-width: 100%;
+  width: 100%;
+  border-radius: var(--radius);
+  background-position: right .6rem center;
+}
+
 /* Statut */
 .inline-select.s-todo       { background-color: #F1F3F5; color: #6B7280; }
 .inline-select.s-inprogress { background-color: #EBF2FA; color: var(--s-inprogress); }

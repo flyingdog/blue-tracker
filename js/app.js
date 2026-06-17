@@ -8,6 +8,19 @@ const App = (() => {
   const PRIORITIES = ['Haute', 'Moyenne', 'Basse'];
   const STATUSES   = ['À faire', 'En cours', 'Bloqué', 'Terminé'];
 
+  const STATUS_CLASS   = { 'À faire': 'todo', 'En cours': 'inprogress', 'Bloqué': 'blocked', 'Terminé': 'done' };
+  const PRIORITY_CLASS = { 'Haute': 'high', 'Moyenne': 'medium', 'Basse': 'low' };
+  const CAT_CLASS      = { 'Atelier': 'atelier', 'Spec': 'spec', 'Investigation': 'investigation', 'Données': 'donnees', 'Admin': 'admin', 'Réunion': 'reunion', 'Autre': 'autre' };
+
+  function colorSelect(sel, type) {
+    const v = sel.value;
+    sel.className = sel.className.replace(/\b(s-\w+|prio-\w+|cat-\w+)\b/g, '');
+    if (type === 'status')   sel.classList.add(`s-${STATUS_CLASS[v]}`);
+    if (type === 'priority') sel.classList.add(`prio-${PRIORITY_CLASS[v]}`);
+    if (type === 'category') sel.classList.add(`cat-${CAT_CLASS[v]}`);
+    sel.addEventListener('change', () => colorSelect(sel, type));
+  }
+
   // ── State ───────────────────────────────────────────────────────────────────
   let state = { clients: [], projects: [], deliverables: [], tasks: [] };
   let currentView = 'list';
@@ -144,17 +157,17 @@ const App = (() => {
         </div>
         <div class="form-row">
           <label>Catégorie *
-            <select name="category" required>
+            <select name="category" class="inline-select" required>
               ${CATEGORIES.map(cat => `<option ${task?.category === cat ? 'selected' : ''}>${cat}</option>`).join('')}
             </select>
           </label>
           <label>Priorité *
-            <select name="priority" required>
+            <select name="priority" class="inline-select" required>
               ${PRIORITIES.map(p => `<option ${task?.priority === p ? 'selected' : ''}>${p}</option>`).join('')}
             </select>
           </label>
           <label>Statut *
-            <select name="status" required>
+            <select name="status" class="inline-select" required>
               ${STATUSES.map(s => `<option ${task?.status === s ? 'selected' : ''}>${s}</option>`).join('')}
             </select>
           </label>
@@ -172,6 +185,11 @@ const App = (() => {
         </div>
       </form>
     `;
+
+    // Appliquer les couleurs aux selects inline du modal
+    colorSelect(modal.querySelector('[name="category"]'), 'category');
+    colorSelect(modal.querySelector('[name="priority"]'),  'priority');
+    colorSelect(modal.querySelector('[name="status"]'),    'status');
 
     // Update deliverable options when project changes
     const projectSel = modal.querySelector('[name="projectId"]');
