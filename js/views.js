@@ -358,6 +358,10 @@ const Views = (() => {
     const sortDir = opts.sortDir || 'asc';
     const groupBy = opts.groupBy || null;
 
+    // Masquer automatiquement la colonne utilisée pour le regroupement
+    const GROUP_TO_COL = { client: 'client', project: 'project', category: 'category', priority: 'priority' };
+    if (groupBy && GROUP_TO_COL[groupBy]) vis[GROUP_TO_COL[groupBy]] = false;
+
     let tasks = filterTasks(state.tasks, state, filters);
     tasks = sortTasks(tasks, sortBy, sortDir, state);
 
