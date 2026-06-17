@@ -171,6 +171,26 @@ a { color: inherit; text-decoration: none; }
 
 .overdue { color: var(--red) !important; font-weight: 600; }
 
+.list-name-line {
+  display: inline-flex;
+  align-items: center;
+  gap: .35rem;
+  flex-wrap: wrap;
+}
+
+.deliv-code-tag {
+  display: inline-block;
+  font-size: .65rem;
+  font-weight: 700;
+  padding: .05rem .35rem;
+  border-radius: 3px;
+  border: 1px solid;
+  letter-spacing: .03em;
+  vertical-align: middle;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
 .task-notes {
   display: block;
   font-size: .72rem;
@@ -740,7 +760,33 @@ a { color: inherit; text-decoration: none; }
   border-radius: var(--radius);
 }
 .deliv-row:hover { background: var(--gray-50); }
-.deliv-icon { font-size: .8rem; flex-shrink: 0; }
+.deliv-code-input {
+  width: 38px;
+  flex-shrink: 0;
+  border: 1px solid var(--gray-300);
+  border-radius: var(--radius);
+  padding: .3rem .35rem;
+  font-size: .78rem;
+  font-weight: 700;
+  text-align: center;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+}
+.deliv-code-input:focus { outline: none; border-color: var(--blue); box-shadow: 0 0 0 2px rgba(24,95,165,.1); }
+
+.deliv-new-code {
+  width: 42px;
+  flex-shrink: 0;
+  border: 1px solid var(--gray-300);
+  border-radius: var(--radius);
+  padding: .3rem .35rem;
+  font-size: .78rem;
+  font-weight: 700;
+  text-align: center;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+}
+.deliv-new-code:focus { outline: none; border-color: var(--blue); box-shadow: 0 0 0 2px rgba(24,95,165,.1); }
 
 .deliv-name-input {
   flex: 1;

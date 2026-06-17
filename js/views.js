@@ -5,6 +5,26 @@ const Views = (() => {
   const STATUSES   = ['À faire', 'En cours', 'Bloqué', 'Terminé'];
   const CATEGORIES = ['Atelier', 'Spec', 'Investigation', 'Données', 'Admin', 'Réunion', 'Autre'];
   const PRIORITIES = ['Haute', 'Moyenne', 'Basse'];
+  const CODE_PALETTE = ['#3B82F6','#8B5CF6','#EC4899','#F59E0B','#10B981','#0EA5E9','#6366F1','#14B8A6','#EF4444','#84CC16'];
+  function codeColor(code) {
+    let h = 0;
+    for (const c of (code || '')) h = (h * 31 + c.charCodeAt(0)) % CODE_PALETTE.length;
+    return CODE_PALETTE[h];
+  }
+  function delivTag(task, deliverables) {
+    if (!task.deliverableId) return null;
+    const d = deliverables.find(x => x.id === task.deliverableId);
+    if (!d || !d.code) return null;
+    const color = codeColor(d.code);
+    const el = document.createElement('span');
+    el.className = 'deliv-code-tag';
+    el.textContent = d.code;
+    el.title = d.name;
+    el.style.background = color + '20';
+    el.style.color = color;
+    el.style.borderColor = color + '50';
+    return el;
+  }
   const STATUS_CLASS = {
     'À faire': 'todo', 'En cours': 'inprogress', 'Bloqué': 'blocked', 'Terminé': 'done'
   };
@@ -136,6 +156,8 @@ const Views = (() => {
       const badgeRow = document.createElement('div');
       badgeRow.className = 'card-badges';
       badgeRow.innerHTML = badges;
+      const kt = delivTag(task, state.deliverables);
+      if (kt) badgeRow.prepend(kt);
       card.appendChild(badgeRow);
     }
     card.appendChild(footer);
@@ -197,7 +219,9 @@ const Views = (() => {
 
       const nameCell = document.createElement('span');
       nameCell.className = 'list-name';
-      nameCell.innerHTML = `${task.name}${task.notes ? `<span class="task-notes">${task.notes}</span>` : ''}`;
+      const tag = delivTag(task, state.deliverables);
+      nameCell.innerHTML = `<span class="list-name-line">${task.name}${tag ? '' : ''}</span>${task.notes ? `<span class="task-notes">${task.notes}</span>` : ''}`;
+      if (tag) nameCell.querySelector('.list-name-line').appendChild(tag);
       nameCell.addEventListener('click', () => App.openTaskModal(task.id));
 
       const clientCell = document.createElement('span');
@@ -390,11 +414,11 @@ const Views = (() => {
           });
 
           const delivBody = delivNode.querySelector('.tree-deliv-body');
-          delivTasks.forEach(t => delivBody.appendChild(treeTaskRow(t, client.color)));
+          delivTasks.forEach(t => delivBody.appendChild(treeTaskRow(t, client.color, state.deliverables)));
           projBody.appendChild(delivNode);
         });
 
-        tasksNoDeliv.forEach(t => projBody.appendChild(treeTaskRow(t, client.color)));
+        tasksNoDeliv.forEach(t => projBody.appendChild(treeTaskRow(t, client.color, state.deliverables)));
         clientBody.appendChild(projNode);
       });
 
@@ -402,7 +426,7 @@ const Views = (() => {
     });
   }
 
-  function treeTaskRow(task, color) {
+  function treeTaskRow(task, color, deliverables) {
     const overdue = isOverdue(task.deadline, task.status);
     const row = document.createElement('div');
     row.className = `tree-task status-${STATUS_CLASS[task.status]}`;
@@ -412,7 +436,9 @@ const Views = (() => {
 
     const name = document.createElement('span');
     name.className = 'tree-task-name';
-    name.innerHTML = `${task.name}${task.notes ? `<span class="task-notes">${task.notes}</span>` : ''}`;
+    name.innerHTML = `<span class="list-name-line">${task.name}</span>${task.notes ? `<span class="task-notes">${task.notes}</span>` : ''}`;
+    const tt = delivTag(task, deliverables || []);
+    if (tt) name.querySelector('.list-name-line').appendChild(tt);
     name.addEventListener('click', () => App.openTaskModal(task.id));
 
     const catSel = categorySelect(task);

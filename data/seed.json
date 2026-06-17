@@ -8,10 +8,10 @@
     { "id": "p2", "name": "DockMaster", "clientId": "c2", "status": "active" }
   ],
   "deliverables": [
-    { "id": "d1", "name": "Cadrage fonctionnel", "projectId": "p1" },
-    { "id": "d2", "name": "Spécification technique", "projectId": "p1" },
-    { "id": "d3", "name": "Module d'import", "projectId": "p2" },
-    { "id": "d4", "name": "Tableau de bord", "projectId": "p2" }
+    { "id": "d1", "name": "Cadrage fonctionnel",    "projectId": "p1", "code": "CF" },
+    { "id": "d2", "name": "Spécification technique", "projectId": "p1", "code": "ST" },
+    { "id": "d3", "name": "Module d'import",         "projectId": "p2", "code": "MI" },
+    { "id": "d4", "name": "Tableau de bord",          "projectId": "p2", "code": "TB" }
   ],
   "tasks": [
     {

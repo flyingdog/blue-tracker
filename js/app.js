@@ -387,17 +387,19 @@ const App = (() => {
                       <div class="deliv-list" data-project="${proj.id}">
                         ${delivs.map(d => {
                           const taskCount = state.tasks.filter(t => t.deliverableId === d.id).length;
+                          const codeColor = (() => { const p=['#3B82F6','#8B5CF6','#EC4899','#F59E0B','#10B981','#0EA5E9','#6366F1','#14B8A6','#EF4444','#84CC16']; let h=0; for(const c of (d.code||''))h=(h*31+c.charCodeAt(0))%p.length; return p[h]; })();
                           return `
                             <div class="deliv-row" data-id="${d.id}">
-                              <span class="deliv-icon">📦</span>
+                              <input class="deliv-code-input" type="text" maxlength="2" value="${d.code||''}" data-id="${d.id}" placeholder="--" style="${d.code ? `background:${codeColor}20;color:${codeColor};border-color:${codeColor}50` : ''}">
                               <input class="deliv-name-input" type="text" value="${d.name}" data-id="${d.id}">
-                              <span class="deliv-task-count" title="${taskCount} tâche(s)">${taskCount} tâche${taskCount > 1 ? 's' : ''}</span>
+                              <span class="deliv-task-count">${taskCount} tâche${taskCount > 1 ? 's' : ''}</span>
                               <button class="deliv-save-btn btn btn-primary btn-sm" data-id="${d.id}">✓</button>
-                              <button class="deliv-delete-btn btn btn-danger btn-sm" data-id="${d.id}" ${taskCount > 0 ? 'title="Supprimer les tâches liées d\'abord"' : ''}>✕</button>
+                              <button class="deliv-delete-btn btn btn-danger btn-sm" data-id="${d.id}" ${taskCount > 0 ? `title="Supprimer les tâches liées d'abord"` : ''}>✕</button>
                             </div>`;
                         }).join('')}
                       </div>
                       <div class="deliv-add-row">
+                        <input class="deliv-new-code" type="text" maxlength="2" placeholder="XX" data-project="${proj.id}">
                         <input class="deliv-new-input" type="text" placeholder="Nouveau livrable…" data-project="${proj.id}">
                         <button class="deliv-add-btn btn btn-primary btn-sm" data-project="${proj.id}">+ Ajouter</button>
                       </div>
@@ -420,15 +422,15 @@ const App = (() => {
       modal.querySelectorAll('.deliv-save-btn').forEach(btn => {
         btn.addEventListener('click', () => {
           const id = btn.dataset.id;
-          const input = modal.querySelector(`.deliv-name-input[data-id="${id}"]`);
+          const nameInput = modal.querySelector(`.deliv-name-input[data-id="${id}"]`);
+          const codeInput = modal.querySelector(`.deliv-code-input[data-id="${id}"]`);
           const deliv = state.deliverables.find(d => d.id === id);
-          if (deliv && input.value.trim()) {
-            deliv.name = input.value.trim();
+          if (deliv && nameInput.value.trim()) {
+            deliv.name = nameInput.value.trim();
+            deliv.code = codeInput.value.trim().toUpperCase() || null;
             markDirty();
             renderView();
-            btn.textContent = '✓';
-            btn.style.background = 'var(--green)';
-            setTimeout(() => { btn.style.background = ''; }, 800);
+            render();
           }
         });
       });
@@ -455,10 +457,12 @@ const App = (() => {
       modal.querySelectorAll('.deliv-add-btn').forEach(btn => {
         btn.addEventListener('click', () => {
           const projectId = btn.dataset.project;
-          const input = modal.querySelector(`.deliv-new-input[data-project="${projectId}"]`);
-          const name = input.value.trim();
-          if (!name) { input.focus(); return; }
-          state.deliverables.push({ id: uid(), name, projectId });
+          const nameInput = modal.querySelector(`.deliv-new-input[data-project="${projectId}"]`);
+          const codeInput = modal.querySelector(`.deliv-new-code[data-project="${projectId}"]`);
+          const name = nameInput.value.trim();
+          if (!name) { nameInput.focus(); return; }
+          const code = codeInput.value.trim().toUpperCase() || null;
+          state.deliverables.push({ id: uid(), name, code, projectId });
           markDirty();
           renderView();
           render();
@@ -466,7 +470,7 @@ const App = (() => {
       });
 
       // Ajouter avec Entrée
-      modal.querySelectorAll('.deliv-new-input').forEach(input => {
+      modal.querySelectorAll('.deliv-new-input, .deliv-new-code').forEach(input => {
         input.addEventListener('keydown', e => {
           if (e.key === 'Enter') {
             modal.querySelector(`.deliv-add-btn[data-project="${input.dataset.project}"]`).click();
