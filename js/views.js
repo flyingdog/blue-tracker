@@ -117,7 +117,7 @@ const Views = (() => {
 
     const header = document.createElement('div');
     header.className = 'card-header';
-    header.innerHTML = `<span class="card-title">${task.name}</span>`;
+    header.innerHTML = `<div class="card-title-block"><span class="card-title">${task.name}</span>${task.notes ? `<span class="task-notes">${task.notes}</span>` : ''}</div>`;
     header.addEventListener('click', () => App.openTaskModal(task.id));
 
     const footer = document.createElement('div');
@@ -197,7 +197,7 @@ const Views = (() => {
 
       const nameCell = document.createElement('span');
       nameCell.className = 'list-name';
-      nameCell.textContent = task.name;
+      nameCell.innerHTML = `${task.name}${task.notes ? `<span class="task-notes">${task.notes}</span>` : ''}`;
       nameCell.addEventListener('click', () => App.openTaskModal(task.id));
 
       const clientCell = document.createElement('span');
@@ -412,7 +412,7 @@ const Views = (() => {
 
     const name = document.createElement('span');
     name.className = 'tree-task-name';
-    name.textContent = task.name;
+    name.innerHTML = `${task.name}${task.notes ? `<span class="task-notes">${task.notes}</span>` : ''}`;
     name.addEventListener('click', () => App.openTaskModal(task.id));
 
     const catSel = categorySelect(task);

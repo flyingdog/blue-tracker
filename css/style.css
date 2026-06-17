@@ -171,6 +171,18 @@ a { color: inherit; text-decoration: none; }
 
 .overdue { color: var(--red) !important; font-weight: 600; }
 
+.task-notes {
+  display: block;
+  font-size: .72rem;
+  font-weight: 400;
+  color: var(--gray-500);
+  margin-top: .15rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 480px;
+}
+
 .badge {
   font-size: .7rem;
   padding: .1rem .4rem;
@@ -331,7 +343,8 @@ a { color: inherit; text-decoration: none; }
   gap: .4rem;
   margin-bottom: .35rem;
 }
-.card-title { flex: 1; font-size: .82rem; font-weight: 500; line-height: 1.3; }
+.card-title-block { flex: 1; min-width: 0; }
+.card-title { display: block; font-size: .82rem; font-weight: 500; line-height: 1.3; }
 .card-badges { display: flex; gap: .3rem; flex-wrap: wrap; margin-bottom: .35rem; }
 .card-footer {
   display: flex;
