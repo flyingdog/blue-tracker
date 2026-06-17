@@ -4,13 +4,13 @@ const App = (() => {
 
   // ── Constantes ─────────────────────────────────────────────────────────────
   const GAPI_CLIENT_ID = '720180178362-6d86hmjecmm45cpkeetadaeqja22agg0.apps.googleusercontent.com';
-  const CATEGORIES = ['Atelier', 'Spec', 'Investigation', 'Données', 'Admin', 'Réunion', 'Autre'];
+  const CATEGORIES = ['Atelier', 'Spec', 'Investigation', 'Données', 'Dév', 'Admin', 'Réunion', 'Autre'];
   const PRIORITIES = ['Haute', 'Moyenne', 'Basse'];
   const STATUSES   = ['À faire', 'En cours', 'Bloqué', 'Terminé'];
 
   const STATUS_CLASS   = { 'À faire': 'todo', 'En cours': 'inprogress', 'Bloqué': 'blocked', 'Terminé': 'done' };
   const PRIORITY_CLASS = { 'Haute': 'high', 'Moyenne': 'medium', 'Basse': 'low' };
-  const CAT_CLASS      = { 'Atelier': 'atelier', 'Spec': 'spec', 'Investigation': 'investigation', 'Données': 'donnees', 'Admin': 'admin', 'Réunion': 'reunion', 'Autre': 'autre' };
+  const CAT_CLASS      = { 'Atelier': 'atelier', 'Spec': 'spec', 'Investigation': 'investigation', 'Données': 'donnees', 'Dév': 'dév', 'Admin': 'admin', 'Réunion': 'reunion', 'Autre': 'autre' };
 
   function colorSelect(sel, type) {
     const v = sel.value;

@@ -19,7 +19,7 @@ const LIST_COLS = [
 const Views = (() => {
 
   const STATUSES   = ['À faire', 'En cours', 'Bloqué', 'Terminé'];
-  const CATEGORIES = ['Atelier', 'Spec', 'Investigation', 'Données', 'Admin', 'Réunion', 'Autre'];
+  const CATEGORIES = ['Atelier', 'Spec', 'Investigation', 'Données', 'Dév', 'Admin', 'Réunion', 'Autre'];
   const PRIORITIES = ['Haute', 'Moyenne', 'Basse'];
   const CODE_PALETTE = ['#3B82F6','#8B5CF6','#EC4899','#F59E0B','#10B981','#0EA5E9','#6366F1','#14B8A6','#EF4444','#84CC16'];
   function codeColor(code) {
@@ -47,7 +47,7 @@ const Views = (() => {
   const PRIORITY_CLASS = { 'Haute': 'high', 'Moyenne': 'medium', 'Basse': 'low' };
   const CAT_CLASS = {
     'Atelier': 'atelier', 'Spec': 'spec', 'Investigation': 'investigation',
-    'Données': 'donnees', 'Admin': 'admin', 'Réunion': 'reunion', 'Autre': 'autre'
+    'Données': 'donnees', 'Dév': 'dév', 'Admin': 'admin', 'Réunion': 'reunion', 'Autre': 'autre'
   };
 
   // ── Inline select helper ──────────────────────────────────────────────────
