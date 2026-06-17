@@ -369,9 +369,17 @@ const App = (() => {
         <label>Deadline
           <input name="deadline" type="date" value="${task?.deadline || ''}">
         </label>
-        <label>Notes
-          <textarea name="notes" rows="3" placeholder="Remarques, contexte…">${task?.notes || ''}</textarea>
-        </label>
+        <div class="form-notes">
+          <div class="notes-editor-header">
+            <span>Notes</span>
+            <div class="notes-tab-group">
+              <button type="button" class="notes-tab active" data-ntab="edit">Markdown</button>
+              <button type="button" class="notes-tab" data-ntab="preview">Aperçu</button>
+            </div>
+          </div>
+          <textarea name="notes" class="notes-textarea" placeholder="Remarques, contexte… (Markdown supporté)">${(task?.notes || '').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</textarea>
+          <div class="notes-preview-pane hidden"></div>
+        </div>
         <div class="form-actions">
           ${!isNew ? `<button type="button" class="btn btn-danger" id="task-delete-btn">Supprimer</button>` : ''}
           <button type="button" class="btn btn-secondary modal-cancel">Annuler</button>
@@ -379,6 +387,26 @@ const App = (() => {
         </div>
       </form>
     `;
+
+    // Onglets Markdown / Aperçu des notes
+    const notesTextarea = modal.querySelector('.notes-textarea');
+    const notesPreview  = modal.querySelector('.notes-preview-pane');
+    modal.querySelectorAll('[data-ntab]').forEach(tab => {
+      tab.addEventListener('click', () => {
+        modal.querySelectorAll('[data-ntab]').forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        if (tab.dataset.ntab === 'preview') {
+          notesPreview.innerHTML = (typeof renderMarkdown !== 'undefined')
+            ? renderMarkdown(notesTextarea.value)
+            : notesTextarea.value;
+          notesPreview.classList.remove('hidden');
+          notesTextarea.classList.add('hidden');
+        } else {
+          notesPreview.classList.add('hidden');
+          notesTextarea.classList.remove('hidden');
+        }
+      });
+    });
 
     // Appliquer les couleurs aux selects inline du modal
     colorSelect(modal.querySelector('[name="category"]'), 'category');

@@ -1,5 +1,11 @@
 // ─── Views: Liste, Kanban, Hiérarchie ─────────────────────────────────────
 
+function renderMarkdown(text) {
+  if (!text) return '';
+  if (typeof marked !== 'undefined') return marked.parse(text);
+  return text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
 const LIST_COLS = [
   { id: 'client',      label: 'Client',    width: '90px',  sort: 'client'   },
   { id: 'project',     label: 'Projet',    width: '130px', sort: 'project'  },
@@ -146,7 +152,19 @@ const Views = (() => {
 
     const header = document.createElement('div');
     header.className = 'card-header';
-    header.innerHTML = `<div class="card-title-block"><span class="card-title">${task.name}</span>${task.notes ? `<span class="task-notes">${task.notes}</span>` : ''}</div>`;
+    const titleBlock = document.createElement('div');
+    titleBlock.className = 'card-title-block';
+    const cardTitle = document.createElement('span');
+    cardTitle.className = 'card-title';
+    cardTitle.textContent = task.name;
+    titleBlock.appendChild(cardTitle);
+    if (task.notes) {
+      const notesEl = document.createElement('div');
+      notesEl.className = 'task-notes';
+      notesEl.innerHTML = renderMarkdown(task.notes);
+      titleBlock.appendChild(notesEl);
+    }
+    header.appendChild(titleBlock);
     header.addEventListener('click', () => App.openTaskModal(task.id));
 
     const footer = document.createElement('div');
@@ -298,10 +316,22 @@ const Views = (() => {
     statusCell.className = 'list-status';
     statusCell.appendChild(statusSelect(task, v => { row.className = `list-row status-${STATUS_CLASS[v]}`; }));
 
-    const nameCell = document.createElement('span');
+    const nameCell = document.createElement('div');
     nameCell.className = 'list-name';
-    nameCell.innerHTML = `<span class="list-name-line"><span class="list-name-text">${task.name}</span></span>${task.notes ? `<span class="task-notes">${task.notes}</span>` : ''}`;
-    nameCell.querySelector('.list-name-text').addEventListener('click', () => App.openTaskModal(task.id));
+    const nameLine = document.createElement('span');
+    nameLine.className = 'list-name-line';
+    const nameText = document.createElement('span');
+    nameText.className = 'list-name-text';
+    nameText.textContent = task.name;
+    nameText.addEventListener('click', () => App.openTaskModal(task.id));
+    nameLine.appendChild(nameText);
+    nameCell.appendChild(nameLine);
+    if (task.notes) {
+      const notesEl = document.createElement('div');
+      notesEl.className = 'task-notes';
+      notesEl.innerHTML = renderMarkdown(task.notes);
+      nameCell.appendChild(notesEl);
+    }
 
     const editBtn = document.createElement('button');
     editBtn.className = 'list-edit-btn icon-btn';
@@ -599,11 +629,20 @@ const Views = (() => {
     const dot = document.createElement('span');
     dot.className = `tree-task-status s-${STATUS_CLASS[task.status]}`;
 
-    const name = document.createElement('span');
+    const name = document.createElement('div');
     name.className = 'tree-task-name';
-    name.innerHTML = `<span class="list-name-line">${task.name}</span>${task.notes ? `<span class="task-notes">${task.notes}</span>` : ''}`;
+    const treeNameLine = document.createElement('span');
+    treeNameLine.className = 'list-name-line';
+    treeNameLine.textContent = task.name;
     const tt = delivTag(task, deliverables || []);
-    if (tt) name.querySelector('.list-name-line').appendChild(tt);
+    if (tt) treeNameLine.appendChild(tt);
+    name.appendChild(treeNameLine);
+    if (task.notes) {
+      const notesEl = document.createElement('div');
+      notesEl.className = 'task-notes';
+      notesEl.innerHTML = renderMarkdown(task.notes);
+      name.appendChild(notesEl);
+    }
     name.addEventListener('click', () => App.openTaskModal(task.id));
 
     const catSel = categorySelect(task);
