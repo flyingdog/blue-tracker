@@ -398,8 +398,15 @@ const App = (() => {
     setView('list');
   }
 
+  function updateTaskField(taskId, field, value) {
+    const task = state.tasks.find(t => t.id === taskId);
+    if (!task) return;
+    task[field] = value;
+    markDirty();
+  }
+
   // Public surface used by Views
-  return { init, openTaskModal, openProjectModal, openClientModal };
+  return { init, openTaskModal, openProjectModal, openClientModal, updateTaskField };
 })();
 
 document.addEventListener('DOMContentLoaded', App.init);

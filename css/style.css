@@ -613,6 +613,49 @@ a { color: inherit; text-decoration: none; }
   .form-row { grid-template-columns: 1fr; }
 }
 
+/* ════════════════════════════════════════════════════════════════════════
+   INLINE SELECTS (édition rapide dans les vues)
+   ════════════════════════════════════════════════════════════════════════ */
+.inline-select {
+  border: none;
+  border-radius: 4px;
+  padding: .15rem .4rem;
+  font-size: .72rem;
+  font-weight: 600;
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='5' viewBox='0 0 8 5'%3E%3Cpath d='M0 0l4 5 4-5z' fill='%23666'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right .35rem center;
+  padding-right: 1.2rem;
+  white-space: nowrap;
+  max-width: 120px;
+  transition: box-shadow .15s;
+}
+.inline-select:hover { box-shadow: 0 0 0 2px rgba(0,0,0,.15); }
+.inline-select:focus { outline: 2px solid var(--blue); outline-offset: 1px; }
+
+/* Statut */
+.inline-select.s-todo       { background-color: #F1F3F5; color: #6B7280; }
+.inline-select.s-inprogress { background-color: #EBF2FA; color: var(--s-inprogress); }
+.inline-select.s-blocked    { background-color: #FDF0F0; color: var(--s-blocked); }
+.inline-select.s-done       { background-color: #EDFAF5; color: var(--s-done); }
+
+/* Priorité */
+.inline-select.prio-high    { background-color: #FDF0F0; color: var(--p-high); }
+.inline-select.prio-medium  { background-color: #FEF6EC; color: var(--p-medium); }
+.inline-select.prio-low     { background-color: #F1F3F5; color: var(--gray-500); }
+
+/* Catégorie */
+.inline-select.cat-atelier       { background-color: #F5F0FF; color: #7C3AED; }
+.inline-select.cat-spec          { background-color: #EFF6FF; color: #2563EB; }
+.inline-select.cat-investigation { background-color: #FFFBEB; color: #D97706; }
+.inline-select.cat-donnees       { background-color: #ECFDF5; color: #059669; }
+.inline-select.cat-admin         { background-color: #F9FAFB; color: #6B7280; }
+.inline-select.cat-reunion       { background-color: #FEF2F2; color: #DC2626; }
+.inline-select.cat-autre         { background-color: #F1F3F5; color: #9CA3AF; }
+
 /* ── Scrollbar ─────────────────────────────────────────────────────────── */
 ::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }

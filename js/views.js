@@ -2,11 +2,72 @@
 
 const Views = (() => {
 
-  const STATUSES = ['À faire', 'En cours', 'Bloqué', 'Terminé'];
+  const STATUSES   = ['À faire', 'En cours', 'Bloqué', 'Terminé'];
+  const CATEGORIES = ['Atelier', 'Spec', 'Investigation', 'Données', 'Admin', 'Réunion', 'Autre'];
+  const PRIORITIES = ['Haute', 'Moyenne', 'Basse'];
   const STATUS_CLASS = {
     'À faire': 'todo', 'En cours': 'inprogress', 'Bloqué': 'blocked', 'Terminé': 'done'
   };
   const PRIORITY_CLASS = { 'Haute': 'high', 'Moyenne': 'medium', 'Basse': 'low' };
+  const CAT_CLASS = {
+    'Atelier': 'atelier', 'Spec': 'spec', 'Investigation': 'investigation',
+    'Données': 'donnees', 'Admin': 'admin', 'Réunion': 'reunion', 'Autre': 'autre'
+  };
+
+  // ── Inline select helper ──────────────────────────────────────────────────
+  function inlineSelect(task, field, options, classFn, onChange) {
+    const sel = document.createElement('select');
+    sel.className = `inline-select ${classFn(task[field])}`;
+    options.forEach(opt => {
+      const o = document.createElement('option');
+      o.value = opt; o.textContent = opt;
+      if (opt === task[field]) o.selected = true;
+      sel.appendChild(o);
+    });
+    sel.addEventListener('mousedown', e => e.stopPropagation());
+    sel.addEventListener('change', e => {
+      e.stopPropagation();
+      const val = e.target.value;
+      sel.className = `inline-select ${classFn(val)}`;
+      App.updateTaskField(task.id, field, val);
+      if (onChange) onChange(val);
+    });
+    return sel;
+  }
+
+  function statusSelect(task, onChange) {
+    return inlineSelect(task, 'status', STATUSES,
+      v => `s-${STATUS_CLASS[v]}`, onChange);
+  }
+  function prioritySelect(task) {
+    return inlineSelect(task, 'priority', PRIORITIES,
+      v => `prio-${PRIORITY_CLASS[v]}`);
+  }
+  function categorySelect(task) {
+    return inlineSelect(task, 'category', CATEGORIES,
+      v => `cat-${CAT_CLASS[v]}`);
+  }
+  function deliverableSelect(task, deliverables) {
+    const projectDelivs = deliverables.filter(d => d.projectId === task.projectId);
+    if (!projectDelivs.length) return null;
+    const sel = document.createElement('select');
+    sel.className = 'inline-select cat-admin';
+    const none = document.createElement('option');
+    none.value = ''; none.textContent = '— Livrable —';
+    sel.appendChild(none);
+    projectDelivs.forEach(d => {
+      const o = document.createElement('option');
+      o.value = d.id; o.textContent = d.name;
+      if (d.id === task.deliverableId) o.selected = true;
+      sel.appendChild(o);
+    });
+    sel.addEventListener('mousedown', e => e.stopPropagation());
+    sel.addEventListener('change', e => {
+      e.stopPropagation();
+      App.updateTaskField(task.id, 'deliverableId', e.target.value || null);
+    });
+    return sel;
+  }
 
   function fmtDate(d) {
     if (!d) return '';
@@ -54,20 +115,31 @@ const Views = (() => {
       ? `<span class="deadline ${overdue ? 'overdue' : ''}">${fmtDate(task.deadline)}</span>`
       : '';
 
-    card.innerHTML = `
-      <div class="card-header">
-        <span class="category-dot cat-${task.category.toLowerCase().replace(/é/g,'e').replace(/ /g,'-')}"></span>
-        <span class="card-title">${task.name}</span>
-        <span class="priority-dot prio-${PRIORITY_CLASS[task.priority]}" title="${task.priority}"></span>
-      </div>
-      ${opts.showBadges !== false ? `<div class="card-badges">${badges}</div>` : ''}
-      <div class="card-footer">
-        <span class="task-category">${task.category}</span>
-        ${deadline}
-      </div>
-    `;
+    const header = document.createElement('div');
+    header.className = 'card-header';
+    header.innerHTML = `<span class="card-title">${task.name}</span>`;
+    header.addEventListener('click', () => App.openTaskModal(task.id));
 
-    card.addEventListener('click', () => App.openTaskModal(task.id));
+    const footer = document.createElement('div');
+    footer.className = 'card-footer';
+    footer.appendChild(categorySelect(task));
+    footer.appendChild(prioritySelect(task));
+    if (task.deadline) {
+      const dl = document.createElement('span');
+      dl.className = `deadline${isOverdue(task.deadline, task.status) ? ' overdue' : ''}`;
+      dl.textContent = fmtDate(task.deadline);
+      footer.appendChild(dl);
+    }
+
+    card.appendChild(header);
+    if (opts.showBadges !== false) {
+      const badgeRow = document.createElement('div');
+      badgeRow.className = 'card-badges';
+      badgeRow.innerHTML = badges;
+      card.appendChild(badgeRow);
+    }
+    card.appendChild(footer);
+
     return card;
   }
 
@@ -112,24 +184,50 @@ const Views = (() => {
       row.dataset.taskId = task.id;
       const color = clientColor(state, task.projectId);
       const overdue = isOverdue(task.deadline, task.status);
-      row.innerHTML = `
-        <span class="list-color-bar" style="background:${color}"></span>
-        <span class="list-status">
-          <span class="status-pill s-${STATUS_CLASS[task.status]}">${task.status}</span>
-        </span>
-        <span class="list-name">${task.name}</span>
-        <span class="list-client" style="color:${color}">${clientName(state, task.projectId)}</span>
-        <span class="list-project">${projectName(state, task.projectId)}</span>
-        <span class="list-cat">${task.category}</span>
-        <span class="list-prio prio-${PRIORITY_CLASS[task.priority]}">${task.priority}</span>
-        <span class="list-deadline ${overdue ? 'overdue' : ''}">${fmtDate(task.deadline)}</span>
-        <button class="list-edit-btn icon-btn" data-id="${task.id}" title="Modifier">✏️</button>
-      `;
-      row.querySelector('.list-name').addEventListener('click', () => App.openTaskModal(task.id));
-      row.querySelector('.list-edit-btn').addEventListener('click', e => {
-        e.stopPropagation();
-        App.openTaskModal(task.id);
-      });
+
+      const colorBar = document.createElement('span');
+      colorBar.className = 'list-color-bar';
+      colorBar.style.background = color;
+
+      const statusCell = document.createElement('span');
+      statusCell.className = 'list-status';
+      statusCell.appendChild(statusSelect(task, newStatus => {
+        row.className = `list-row status-${STATUS_CLASS[newStatus]}`;
+      }));
+
+      const nameCell = document.createElement('span');
+      nameCell.className = 'list-name';
+      nameCell.textContent = task.name;
+      nameCell.addEventListener('click', () => App.openTaskModal(task.id));
+
+      const clientCell = document.createElement('span');
+      clientCell.className = 'list-client';
+      clientCell.style.color = color;
+      clientCell.textContent = clientName(state, task.projectId);
+
+      const projectCell = document.createElement('span');
+      projectCell.className = 'list-project';
+      projectCell.textContent = projectName(state, task.projectId);
+
+      const catCell = document.createElement('span');
+      catCell.className = 'list-cat';
+      catCell.appendChild(categorySelect(task));
+
+      const prioCell = document.createElement('span');
+      prioCell.className = 'list-prio';
+      prioCell.appendChild(prioritySelect(task));
+
+      const deadlineCell = document.createElement('span');
+      deadlineCell.className = `list-deadline${overdue ? ' overdue' : ''}`;
+      deadlineCell.textContent = fmtDate(task.deadline);
+
+      const editBtn = document.createElement('button');
+      editBtn.className = 'list-edit-btn icon-btn';
+      editBtn.title = 'Modifier';
+      editBtn.textContent = '✏️';
+      editBtn.addEventListener('click', e => { e.stopPropagation(); App.openTaskModal(task.id); });
+
+      row.append(colorBar, statusCell, nameCell, clientCell, projectCell, catCell, prioCell, deadlineCell, editBtn);
       container.appendChild(row);
     });
   }
@@ -308,14 +406,35 @@ const Views = (() => {
     const overdue = isOverdue(task.deadline, task.status);
     const row = document.createElement('div');
     row.className = `tree-task status-${STATUS_CLASS[task.status]}`;
-    row.innerHTML = `
-      <span class="tree-task-status s-${STATUS_CLASS[task.status]}"></span>
-      <span class="tree-task-name">${task.name}</span>
-      <span class="tree-task-cat">${task.category}</span>
-      <span class="tree-task-prio prio-${PRIORITY_CLASS[task.priority]}">${task.priority}</span>
-      ${task.deadline ? `<span class="tree-task-deadline ${overdue ? 'overdue' : ''}">${fmtDate(task.deadline)}</span>` : ''}
-    `;
-    row.addEventListener('click', () => App.openTaskModal(task.id));
+
+    const dot = document.createElement('span');
+    dot.className = `tree-task-status s-${STATUS_CLASS[task.status]}`;
+
+    const name = document.createElement('span');
+    name.className = 'tree-task-name';
+    name.textContent = task.name;
+    name.addEventListener('click', () => App.openTaskModal(task.id));
+
+    const catSel = categorySelect(task);
+    catSel.classList.add('tree-task-cat');
+
+    const prioSel = prioritySelect(task);
+    prioSel.classList.add('tree-task-prio');
+
+    const statusSel = statusSelect(task, newStatus => {
+      dot.className = `tree-task-status s-${STATUS_CLASS[newStatus]}`;
+      row.className = `tree-task status-${STATUS_CLASS[newStatus]}`;
+    });
+
+    row.append(dot, name, catSel, prioSel, statusSel);
+
+    if (task.deadline) {
+      const dl = document.createElement('span');
+      dl.className = `tree-task-deadline${overdue ? ' overdue' : ''}`;
+      dl.textContent = fmtDate(task.deadline);
+      row.appendChild(dl);
+    }
+
     return row;
   }
 
