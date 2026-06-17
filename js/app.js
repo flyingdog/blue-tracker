@@ -55,6 +55,8 @@ const App = (() => {
 
   function renderView() {
     const container = $view();
+    const fb = document.querySelector('.filter-bar');
+    if (fb) fb.style.display = '';
     container.className = `view-${currentView}`;
     if (currentView === 'list')        Views.renderList(container, state, filters, listOptions);
     else if (currentView === 'kanban') Views.renderKanban(container, state, filters);
@@ -330,6 +332,7 @@ const App = (() => {
     const color      = getColor(initProjId);
 
     const container = $view();
+    document.querySelector('.filter-bar').style.display = 'none';
     container.className = 'view-task-detail';
     container.innerHTML = `
       <div class="td-topbar">
