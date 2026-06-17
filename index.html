@@ -10,7 +10,7 @@
   <!-- Favicon inline SVG -->
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%23185FA5'/><text x='16' y='22' text-anchor='middle' fill='white' font-size='18' font-family='system-ui' font-weight='700'>B</text></svg>">
 
-  <link rel="stylesheet" href="css/style.css?v=9">
+  <link rel="stylesheet" href="css/style.css?v=10">
 
   <!-- Google Identity Services (optionnel, pour Drive) -->
   <script src="https://accounts.google.com/gsi/client" async defer></script>
@@ -79,6 +79,43 @@
     </select>
     <input  id="filter-search"   type="text" placeholder="Rechercher…" aria-label="Recherche textuelle">
     <button id="filter-reset"    class="filter-reset" title="Réinitialiser les filtres">✕ Réinitialiser</button>
+  </div>
+
+  <!-- ── Options barre liste ───────────────────────────────────────────── -->
+  <div id="list-options-bar" class="list-options-bar hidden">
+    <div class="list-opt-section">
+      <label class="list-opt-label">Grouper</label>
+      <select id="opt-group-by">
+        <option value="">— Aucun —</option>
+        <option value="client">Client</option>
+        <option value="project">Projet</option>
+        <option value="status">Statut</option>
+        <option value="category">Catégorie</option>
+        <option value="priority">Priorité</option>
+      </select>
+    </div>
+    <div class="list-opt-section">
+      <label class="list-opt-label">Trier</label>
+      <select id="opt-sort-by">
+        <option value="deadline">Deadline</option>
+        <option value="priority">Priorité</option>
+        <option value="status">Statut</option>
+        <option value="name">Nom</option>
+        <option value="client">Client</option>
+        <option value="project">Projet</option>
+      </select>
+      <button id="opt-sort-dir" class="sort-dir-btn" title="Inverser le tri">↑</button>
+    </div>
+    <div class="list-opt-sep"></div>
+    <div class="list-opt-section list-opt-cols">
+      <label class="list-opt-label">Colonnes</label>
+      <label class="col-toggle"><input type="checkbox" data-col="client"      checked> Client</label>
+      <label class="col-toggle"><input type="checkbox" data-col="project"     checked> Projet</label>
+      <label class="col-toggle"><input type="checkbox" data-col="deliverable" checked> Livrable</label>
+      <label class="col-toggle"><input type="checkbox" data-col="category"    checked> Catégorie</label>
+      <label class="col-toggle"><input type="checkbox" data-col="priority"    checked> Priorité</label>
+      <label class="col-toggle"><input type="checkbox" data-col="deadline"    checked> Deadline</label>
+    </div>
   </div>
 
   <!-- ── View container ─────────────────────────────────────────────────── -->

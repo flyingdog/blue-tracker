@@ -113,6 +113,98 @@ a { color: inherit; text-decoration: none; }
 #auth-btn:hover { color: var(--white); border-color: rgba(255,255,255,.5); }
 #auth-btn.connected { color: #7EFFD0; border-color: #7EFFD0; }
 
+/* ── List options bar ───────────────────────────────────────────────────── */
+.list-options-bar {
+  background: var(--gray-50);
+  border-bottom: 1px solid var(--gray-200);
+  padding: .4rem 1.25rem;
+  display: flex;
+  align-items: center;
+  gap: .75rem;
+  flex-wrap: wrap;
+  font-size: .78rem;
+}
+.list-options-bar.hidden { display: none; }
+
+.list-opt-section {
+  display: flex;
+  align-items: center;
+  gap: .35rem;
+}
+.list-opt-label {
+  font-size: .72rem;
+  font-weight: 600;
+  color: var(--gray-500);
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  white-space: nowrap;
+}
+.list-options-bar select {
+  border: 1px solid var(--gray-300);
+  border-radius: var(--radius);
+  padding: .2rem .45rem;
+  font-size: .78rem;
+  color: var(--gray-700);
+  background: var(--white);
+  height: 26px;
+}
+.list-options-bar select:focus { outline: 2px solid var(--blue); outline-offset: -1px; }
+
+.sort-dir-btn {
+  width: 26px; height: 26px;
+  border: 1px solid var(--gray-300);
+  border-radius: var(--radius);
+  font-size: .85rem;
+  color: var(--gray-700);
+  background: var(--white);
+  display: flex; align-items: center; justify-content: center;
+  transition: background .12s;
+}
+.sort-dir-btn:hover { background: var(--gray-100); }
+
+.list-opt-sep {
+  width: 1px; height: 18px;
+  background: var(--gray-200);
+  margin: 0 .25rem;
+}
+
+.list-opt-cols { flex-wrap: wrap; gap: .25rem .5rem; }
+.col-toggle {
+  display: flex; align-items: center; gap: .25rem;
+  font-size: .75rem; color: var(--gray-700);
+  cursor: pointer; user-select: none;
+  white-space: nowrap;
+}
+.col-toggle input { cursor: pointer; accent-color: var(--blue); }
+
+/* ── List group headers ──────────────────────────────────────────────────── */
+.list-group-header {
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+  padding: .45rem .75rem .3rem;
+  background: var(--gray-50);
+  border-bottom: 1px solid var(--gray-200);
+  border-top: 2px solid var(--gray-200);
+  font-size: .78rem;
+  font-weight: 700;
+  color: var(--gray-700);
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+.list-group-header:first-child { border-top: none; }
+.list-group-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.list-group-label { flex: 1; }
+.list-group-count {
+  font-size: .7rem;
+  background: var(--gray-200);
+  color: var(--gray-700);
+  border-radius: 20px;
+  padding: .05rem .4rem;
+  font-weight: 600;
+}
+
 /* ── Filter bar ─────────────────────────────────────────────────────────── */
 .filter-bar {
   background: var(--white);

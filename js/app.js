@@ -25,6 +25,12 @@ const App = (() => {
   let state = { clients: [], projects: [], deliverables: [], tasks: [] };
   let currentView = 'list';
   let filters = {};
+  let listOptions = {
+    columns: { client: true, project: true, deliverable: true, category: true, priority: true, deadline: true },
+    groupBy: null,
+    sortBy: 'deadline',
+    sortDir: 'asc',
+  };
 
   // ── DOM refs ────────────────────────────────────────────────────────────────
   const $ = id => document.getElementById(id);
@@ -43,15 +49,46 @@ const App = (() => {
   function setView(name) {
     currentView = name;
     document.querySelectorAll('.view-btn').forEach(b => b.classList.toggle('active', b.dataset.view === name));
+    $('list-options-bar').classList.toggle('hidden', name !== 'list');
     renderView();
   }
 
   function renderView() {
     const container = $view();
     container.className = `view-${currentView}`;
-    if (currentView === 'list')      Views.renderList(container, state, filters);
+    if (currentView === 'list')        Views.renderList(container, state, filters, listOptions);
     else if (currentView === 'kanban') Views.renderKanban(container, state, filters);
-    else                             Views.renderHierarchy(container, state, filters);
+    else                               Views.renderHierarchy(container, state, filters);
+  }
+
+  // ── Options barre liste ──────────────────────────────────────────────────────
+  function buildOptionsBar() {
+    const groupSel = $('opt-group-by');
+    const sortSel  = $('opt-sort-by');
+    const dirBtn   = $('opt-sort-dir');
+
+    groupSel.addEventListener('change', () => {
+      listOptions.groupBy = groupSel.value || null;
+      renderView();
+    });
+
+    sortSel.addEventListener('change', () => {
+      listOptions.sortBy = sortSel.value;
+      renderView();
+    });
+
+    dirBtn.addEventListener('click', () => {
+      listOptions.sortDir = listOptions.sortDir === 'asc' ? 'desc' : 'asc';
+      dirBtn.textContent = listOptions.sortDir === 'asc' ? '↑' : '↓';
+      renderView();
+    });
+
+    document.querySelectorAll('.col-toggle input').forEach(cb => {
+      cb.addEventListener('change', () => {
+        listOptions.columns[cb.dataset.col] = cb.checked;
+        renderView();
+      });
+    });
   }
 
   // ── Filtres ──────────────────────────────────────────────────────────────────
@@ -552,6 +589,7 @@ const App = (() => {
     });
 
     buildFilterBar();
+    buildOptionsBar();
     setView('list');
   }
 
