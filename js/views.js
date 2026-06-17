@@ -323,7 +323,6 @@ const Views = (() => {
     const nameText = document.createElement('span');
     nameText.className = 'list-name-text';
     nameText.textContent = task.name;
-    nameText.addEventListener('click', () => App.openTaskModal(task.id));
     nameLine.appendChild(nameText);
     nameCell.appendChild(nameLine);
     if (task.notes) {
@@ -334,9 +333,9 @@ const Views = (() => {
     }
 
     const editBtn = document.createElement('button');
-    editBtn.className = 'list-edit-btn icon-btn';
-    editBtn.title = 'Modifier'; editBtn.textContent = '✏️';
-    editBtn.addEventListener('click', e => { e.stopPropagation(); App.openTaskModal(task.id); });
+    editBtn.className = 'list-nav-btn';
+    editBtn.title = 'Ouvrir'; editBtn.textContent = '›';
+    editBtn.addEventListener('click', e => { e.stopPropagation(); App.openTaskDetail(task.id); });
 
     row.append(colorBar, statusCell, nameCell);
 

@@ -308,51 +308,50 @@ const App = (() => {
     });
   }
 
-  // ── Panneau détail tâche (Master-Detail Fiori) ──────────────────────────────
-  let currentDetailTaskId = null;
-
+  // ── Vue détail tâche (navigation full-page Fiori) ────────────────────────
   function openTaskDetail(taskId, defaultProjectId) {
-    currentDetailTaskId = taskId;
-    const panel = $('task-detail');
-    panel.classList.remove('closed');
-
     const task  = taskId ? state.tasks.find(t => t.id === taskId) : null;
     const isNew = !task;
 
-    function clientColor(projectId) {
-      const proj   = state.projects.find(p => p.id === projectId);
+    function getColor(pid) {
+      const proj   = state.projects.find(p => p.id === pid);
       const client = proj ? state.clients.find(c => c.id === proj.clientId) : null;
       return client?.color || '#185FA5';
     }
-    function projectLabel(projectId) {
-      const proj   = state.projects.find(p => p.id === projectId);
-      const client = proj ? state.clients.find(c => c.id === proj.clientId) : null;
-      return proj ? `${client?.name || ''} / ${proj.name}` : '';
+    function getClientName(pid) {
+      const proj = state.projects.find(p => p.id === pid);
+      return proj ? (state.clients.find(c => c.id === proj.clientId)?.name || '') : '';
+    }
+    function getProjectName(pid) {
+      return state.projects.find(p => p.id === pid)?.name || '';
     }
 
-    const initProjId  = task?.projectId || defaultProjectId || '';
-    const borderColor = clientColor(initProjId);
-    const projText    = isNew ? '' : projectLabel(initProjId);
+    const initProjId = task?.projectId || defaultProjectId || '';
+    const color      = getColor(initProjId);
 
-    panel.innerHTML = `
-      <div class="td-header" style="border-left-color:${borderColor}">
-        <div class="td-header-info">
-          <span class="td-header-eyebrow">${isNew ? 'Nouvelle tâche' : 'Tâche'}</span>
-          ${projText ? `<span class="td-header-project">${projText}</span>` : ''}
-        </div>
-        <button class="td-close" title="Fermer" aria-label="Fermer le panneau">✕</button>
+    const container = $view();
+    container.className = 'view-task-detail';
+    container.innerHTML = `
+      <div class="td-topbar">
+        <button class="td-back-btn" id="td-back">← Retour</button>
+        ${!isNew && initProjId ? `
+          <span class="td-breadcrumb">
+            <span class="td-bc-client" style="color:${color}">${getClientName(initProjId)}</span>
+            <span class="td-bc-sep">›</span>
+            <span>${getProjectName(initProjId)}</span>
+          </span>` : ''}
       </div>
-      <form id="task-detail-form" class="td-form">
-        <div class="td-section">
-          <label class="td-label">Nom *</label>
-          <input name="name" type="text" required class="td-input"
-            value="${(task?.name || '').replace(/"/g,'&quot;')}"
-            placeholder="Nom de la tâche">
-        </div>
-        <div class="td-row">
-          <div class="td-section">
-            <label class="td-label">Projet *</label>
-            <select name="projectId" required class="td-select">
+      <div class="td-obj-header" id="td-obj-header" style="border-left-color:${color}">
+        <input id="td-name-input" class="td-obj-name-input"
+          value="${(task?.name || '').replace(/"/g,'&quot;')}"
+          placeholder="Nom de la tâche"
+          autocomplete="off">
+      </div>
+      <form id="task-detail-form" class="td-form-page">
+        <div class="td-fields-grid">
+          <div class="td-field">
+            <label class="td-field-label">Projet *</label>
+            <select name="projectId" required>
               <option value="">— Choisir —</option>
               ${state.projects.map(p => {
                 const c = state.clients.find(c => c.id === p.clientId);
@@ -361,63 +360,64 @@ const App = (() => {
               }).join('')}
             </select>
           </div>
-          <div class="td-section">
-            <label class="td-label">Livrable</label>
-            <select name="deliverableId" class="td-select"></select>
+          <div class="td-field">
+            <label class="td-field-label">Livrable</label>
+            <select name="deliverableId"></select>
           </div>
         </div>
-        <div class="td-row td-row-3">
-          <div class="td-section">
-            <label class="td-label">Catégorie *</label>
-            <select name="category" class="td-select inline-select" required>
+        <div class="td-fields-grid td-fields-grid-4">
+          <div class="td-field">
+            <label class="td-field-label">Catégorie *</label>
+            <select name="category" class="inline-select" required>
               ${CATEGORIES.map(cat => `<option ${task?.category === cat ? 'selected' : ''}>${cat}</option>`).join('')}
             </select>
           </div>
-          <div class="td-section">
-            <label class="td-label">Priorité *</label>
-            <select name="priority" class="td-select inline-select" required>
+          <div class="td-field">
+            <label class="td-field-label">Priorité *</label>
+            <select name="priority" class="inline-select" required>
               ${PRIORITIES.map(p => `<option ${task?.priority === p ? 'selected' : ''}>${p}</option>`).join('')}
             </select>
           </div>
-          <div class="td-section">
-            <label class="td-label">Statut *</label>
-            <select name="status" class="td-select inline-select" required>
+          <div class="td-field">
+            <label class="td-field-label">Statut *</label>
+            <select name="status" class="inline-select" required>
               ${STATUSES.map(s => `<option ${task?.status === s ? 'selected' : ''}>${s}</option>`).join('')}
             </select>
           </div>
+          <div class="td-field">
+            <label class="td-field-label">Deadline</label>
+            <input name="deadline" type="date" value="${task?.deadline || ''}">
+          </div>
         </div>
-        <div class="td-section">
-          <label class="td-label">Deadline</label>
-          <input name="deadline" type="date" class="td-input" value="${task?.deadline || ''}">
-        </div>
-        <div class="td-section">
+        <hr class="td-divider">
+        <div class="td-field">
           <div class="notes-editor-header">
-            <span class="td-label">Notes</span>
+            <span class="td-field-label">Notes</span>
             <div class="notes-tab-group">
               <button type="button" class="notes-tab active" data-ntab="edit">Markdown</button>
               <button type="button" class="notes-tab" data-ntab="preview">Aperçu</button>
             </div>
           </div>
-          <textarea name="notes" class="notes-textarea" style="min-height:160px"
+          <textarea name="notes" class="notes-textarea" style="min-height:220px"
             placeholder="Remarques, contexte… (Markdown supporté)">${(task?.notes || '').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</textarea>
           <div class="notes-preview-pane hidden"></div>
         </div>
-        <div class="td-actions">
-          ${!isNew ? `<button type="button" class="btn btn-danger td-delete-btn">Supprimer</button>` : ''}
-          <div class="td-actions-right">
+        <div class="td-form-footer">
+          ${!isNew ? `<button type="button" class="btn btn-danger td-delete-btn">Supprimer</button>` : '<span></span>'}
+          <div class="td-form-footer-right">
             <button type="button" class="btn btn-secondary td-cancel-btn">Annuler</button>
-            <button type="submit" class="btn btn-primary">${isNew ? 'Créer' : 'Enregistrer'}</button>
+            <button type="submit" class="btn btn-primary">${isNew ? 'Créer la tâche' : 'Enregistrer'}</button>
           </div>
         </div>
       </form>
     `;
 
-    const form       = panel.querySelector('#task-detail-form');
+    const form       = container.querySelector('#task-detail-form');
     const projectSel = form.querySelector('[name="projectId"]');
     const delivSel   = form.querySelector('[name="deliverableId"]');
 
     function refreshDeliverables(projectId) {
-      const current = task?.deliverableId || delivSel.value || '';
+      const current = task?.deliverableId || '';
       delivSel.innerHTML = '<option value="">— Aucun —</option>';
       state.deliverables
         .filter(d => !projectId || d.projectId === projectId)
@@ -432,14 +432,15 @@ const App = (() => {
 
     projectSel.addEventListener('change', () => {
       refreshDeliverables(projectSel.value);
-      panel.querySelector('.td-header').style.borderLeftColor = clientColor(projectSel.value);
-      const info = panel.querySelector('.td-header-info');
-      const label = projectLabel(projectSel.value);
-      let projEl = info.querySelector('.td-header-project');
-      if (label) {
-        if (!projEl) { projEl = document.createElement('span'); projEl.className = 'td-header-project'; info.appendChild(projEl); }
-        projEl.textContent = label;
-      } else if (projEl) projEl.remove();
+      const c = getColor(projectSel.value);
+      container.querySelector('#td-obj-header').style.borderLeftColor = c;
+      const bc = container.querySelector('.td-breadcrumb');
+      if (bc) {
+        bc.innerHTML = `
+          <span class="td-bc-client" style="color:${c}">${getClientName(projectSel.value)}</span>
+          <span class="td-bc-sep">›</span>
+          <span>${getProjectName(projectSel.value)}</span>`;
+      }
     });
 
     colorSelect(form.querySelector('[name="category"]'), 'category');
@@ -465,43 +466,37 @@ const App = (() => {
       });
     });
 
-    panel.querySelector('.td-close').addEventListener('click', closeTaskDetail);
-    form.querySelector('.td-cancel-btn')?.addEventListener('click', closeTaskDetail);
+    container.querySelector('#td-back').addEventListener('click', renderView);
+    form.querySelector('.td-cancel-btn').addEventListener('click', renderView);
 
     form.querySelector('.td-delete-btn')?.addEventListener('click', () => {
       if (confirm(`Supprimer « ${task.name} » ?`)) {
         state.tasks = state.tasks.filter(t => t.id !== taskId);
         markDirty();
-        closeTaskDetail();
         renderView();
       }
     });
 
     form.addEventListener('submit', e => {
       e.preventDefault();
+      const nameVal = container.querySelector('#td-name-input').value.trim();
+      if (!nameVal) { container.querySelector('#td-name-input').focus(); return; }
       const fd   = new FormData(e.target);
       const data = Object.fromEntries(fd.entries());
+      data.name  = nameVal;
       if (isNew) {
         state.tasks.push({ id: uid(), ...data, deliverableId: data.deliverableId || null, notes: data.notes || '' });
-        markDirty();
-        closeTaskDetail();
-        renderView();
       } else {
         Object.assign(task, { ...data, deliverableId: data.deliverableId || null });
-        markDirty();
-        renderView();
       }
+      markDirty();
+      renderView();
     });
 
-    setTimeout(() => form.querySelector('[name="name"]')?.focus(), 60);
+    setTimeout(() => container.querySelector('#td-name-input')?.focus(), 60);
   }
 
-  function closeTaskDetail() {
-    currentDetailTaskId = null;
-    const panel = $('task-detail');
-    panel.classList.add('closed');
-    setTimeout(() => { if (panel.classList.contains('closed')) panel.innerHTML = ''; }, 250);
-  }
+  function closeTaskDetail() { renderView(); }
 
   // ── Modal projet ─────────────────────────────────────────────────────────────
   function openProjectModal(projectId, defaultClientId) {
@@ -808,9 +803,9 @@ const App = (() => {
       updateAuthUI(Storage.isConnected);
     });
 
-    // Keyboard shortcut: Escape ferme modal ou panneau détail
+    // Keyboard shortcut: Escape ferme modal (les autres vues gèrent leur retour)
     document.addEventListener('keydown', e => {
-      if (e.key === 'Escape') { closeModal(); closeTaskDetail(); }
+      if (e.key === 'Escape') closeModal();
     });
 
     buildFilterBar();

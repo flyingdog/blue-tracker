@@ -384,82 +384,104 @@ a { color: inherit; text-decoration: none; }
 }
 .filter-reset:hover { color: var(--red); border-color: var(--red); }
 
-/* ── Master-Detail layout ────────────────────────────────────────────────── */
-.app-body { flex: 1; display: flex; overflow: hidden; min-height: 0; }
-.app-main { flex: 1; min-width: 0; padding: 1rem 1.25rem; overflow: auto; }
+/* ── Main content ───────────────────────────────────────────────────────── */
+.app-main { flex: 1; padding: 1rem 1.25rem; overflow: auto; }
 
-.task-detail {
-  width: 420px;
-  min-width: 420px;
-  flex-shrink: 0;
-  border-left: 2px solid var(--gray-200);
+/* ── Bouton navigation › en fin de ligne ────────────────────────────────── */
+.list-nav-btn {
+  width: 28px; height: 28px; flex-shrink: 0;
+  border-radius: var(--radius); font-size: 1.05rem; font-weight: 300;
+  color: var(--gray-400); display: flex; align-items: center; justify-content: center;
+  transition: background .1s, color .1s;
+}
+.list-nav-btn:hover { background: var(--blue-light); color: var(--blue); }
+
+/* ════════════════════════════════════════════════════════════════════════
+   VUE DÉTAIL TÂCHE (page complète)
+   ════════════════════════════════════════════════════════════════════════ */
+.view-task-detail {
+  margin: -1rem -1.25rem 0;
+}
+
+/* Barre de navigation (← Retour + breadcrumb) */
+.td-topbar {
+  display: flex;
+  align-items: center;
+  gap: .75rem;
+  padding: .6rem 1.25rem;
   background: var(--white);
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  box-shadow: -3px 0 16px rgba(0,0,0,.07);
-  transition: min-width .22s ease, width .22s ease;
-}
-.task-detail.closed {
-  width: 0;
-  min-width: 0;
-  border-left: none;
-  box-shadow: none;
-  overflow: hidden;
-}
-
-/* ── Detail panel header ─────────────────────────────────────────────────── */
-.td-header {
-  padding: .9rem 1.1rem .8rem 1rem;
-  border-left: 4px solid var(--blue);
   border-bottom: 1px solid var(--gray-200);
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: .5rem;
-  background: var(--gray-50);
-  flex-shrink: 0;
+  position: sticky;
+  top: 0;
+  z-index: 4;
 }
-.td-header-info { display: flex; flex-direction: column; gap: .2rem; min-width: 0; overflow: hidden; }
-.td-header-eyebrow {
-  font-size: .68rem; font-weight: 700; color: var(--gray-500);
-  text-transform: uppercase; letter-spacing: .06em;
+.td-back-btn {
+  display: inline-flex; align-items: center; gap: .3rem;
+  font-size: .82rem; font-weight: 600; color: var(--blue);
+  padding: .3rem .65rem; border-radius: var(--radius);
+  transition: background .1s; white-space: nowrap;
 }
-.td-header-project {
-  font-size: .78rem; color: var(--gray-700);
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-}
-.td-close {
-  width: 26px; height: 26px; flex-shrink: 0;
-  border-radius: var(--radius); font-size: .8rem; color: var(--gray-500);
-  display: flex; align-items: center; justify-content: center; transition: background .1s;
-}
-.td-close:hover { background: var(--gray-200); color: var(--gray-900); }
+.td-back-btn:hover { background: var(--blue-light); }
+.td-breadcrumb { font-size: .78rem; color: var(--gray-500); }
+.td-bc-client { font-weight: 600; }
+.td-bc-sep { padding: 0 .3rem; color: var(--gray-300); }
 
-/* ── Detail panel form ───────────────────────────────────────────────────── */
-.td-form { flex: 1; overflow-y: auto; padding: 1rem 1.1rem; display: flex; flex-direction: column; gap: .85rem; }
-.td-section { display: flex; flex-direction: column; gap: .3rem; }
-.td-label { font-size: .68rem; font-weight: 700; color: var(--gray-500); text-transform: uppercase; letter-spacing: .05em; }
-.td-input, .td-select {
+/* En-tête objet (nom + barre colorée) */
+.td-obj-header {
+  padding: 1.1rem 1.5rem 1rem 1.25rem;
+  border-left: 5px solid var(--blue);
+  border-bottom: 1px solid var(--gray-200);
+  background: var(--white);
+}
+.td-obj-name-input {
+  font-size: 1.15rem; font-weight: 700; color: var(--gray-900);
+  border: none; background: transparent; width: 100%; padding: 0;
+  line-height: 1.4;
+}
+.td-obj-name-input::placeholder { color: var(--gray-400); font-weight: 400; }
+.td-obj-name-input:focus {
+  outline: none; border-bottom: 2px solid var(--blue);
+}
+
+/* Corps du formulaire */
+.td-form-page {
+  padding: 1.25rem 1.5rem 1.5rem;
+  display: flex; flex-direction: column; gap: 1.1rem;
+}
+.td-fields-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: .85rem;
+}
+.td-fields-grid-4 { grid-template-columns: repeat(4, 1fr); }
+.td-field { display: flex; flex-direction: column; gap: .3rem; }
+.td-field-label {
+  font-size: .68rem; font-weight: 700; color: var(--gray-500);
+  text-transform: uppercase; letter-spacing: .05em;
+}
+.td-field input[type="text"],
+.td-field input[type="date"],
+.td-field select {
   border: 1px solid var(--gray-300); border-radius: var(--radius);
   padding: .45rem .65rem; font-size: .85rem; color: var(--gray-900);
-  background: var(--white); transition: border-color .15s; width: 100%;
+  background: var(--white); width: 100%; transition: border-color .15s;
 }
-.td-input:focus, .td-select:focus {
+.td-field input:focus, .td-field select:focus {
   outline: none; border-color: var(--blue); box-shadow: 0 0 0 3px rgba(24,95,165,.12);
 }
-.td-row { display: grid; grid-template-columns: 1fr 1fr; gap: .65rem; }
-.td-row-3 { grid-template-columns: 1fr 1fr 1fr; }
-.td-actions {
-  display: flex; align-items: center; gap: .5rem;
-  padding-top: .85rem; border-top: 1px solid var(--gray-200); margin-top: .1rem;
-}
-.td-actions-right { display: flex; gap: .5rem; margin-left: auto; }
-.td-form .inline-select {
+.td-form-page .inline-select {
   font-size: .85rem; padding: .45rem .65rem; padding-right: 1.6rem;
   max-width: 100%; width: 100%; border-radius: var(--radius);
   border: 1px solid var(--gray-300); background-position: right .6rem center;
 }
+.td-divider {
+  border: none; border-top: 1px solid var(--gray-200); margin: .1rem 0;
+}
+.td-form-footer {
+  display: flex; align-items: center; justify-content: space-between;
+  padding-top: 1rem; border-top: 2px solid var(--gray-200); gap: .5rem;
+}
+.td-form-footer-right { display: flex; gap: .5rem; }
 
 /* ── Shared: status & priority ─────────────────────────────────────────── */
 .status-pill {
@@ -1012,11 +1034,7 @@ a { color: inherit; text-decoration: none; }
    RESPONSIVE
    ════════════════════════════════════════════════════════════════════════ */
 @media (max-width: 900px) {
-  .task-detail:not(.closed) {
-    position: fixed; inset: 0;
-    width: 100% !important; min-width: 100% !important;
-    z-index: 150; border-left: none; box-shadow: none;
-  }
+  .td-fields-grid-4 { grid-template-columns: repeat(2, 1fr); }
   .kanban-board { grid-template-columns: repeat(2, 1fr); }
   .list-row {
     display: grid;
