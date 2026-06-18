@@ -348,7 +348,10 @@ const Views = (() => {
 
     const statusCell = document.createElement('span');
     statusCell.className = 'list-status';
-    statusCell.appendChild(statusSelect(task, v => { row.className = `list-row status-${STATUS_CLASS[v]}`; }));
+    statusCell.appendChild(statusSelect(task, v => {
+      row.className = `list-row status-${STATUS_CLASS[v]}`;
+      colorBar.style.background = `var(--s-${STATUS_CLASS[v] || 'todo'})`;
+    }));
 
     const nameCell = document.createElement('div');
     nameCell.className = 'list-name';
