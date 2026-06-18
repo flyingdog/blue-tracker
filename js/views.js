@@ -344,7 +344,7 @@ const Views = (() => {
 
     const colorBar = document.createElement('span');
     colorBar.className = 'list-color-bar';
-    colorBar.style.background = color;
+    colorBar.style.background = `var(--s-${STATUS_CLASS[task.status] || 'todo'})`;
 
     const statusCell = document.createElement('span');
     statusCell.className = 'list-status';
