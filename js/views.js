@@ -197,6 +197,14 @@ const Views = (() => {
       titleBlock.appendChild(notesEl);
     }
     header.appendChild(titleBlock);
+
+    const cardFlagBtn = document.createElement('button');
+    cardFlagBtn.className = `card-flag-btn${task.daily_flag ? ' flagged' : ''}`;
+    cardFlagBtn.title = task.daily_flag ? 'Retirer du focus' : 'Ajouter au focus du jour';
+    cardFlagBtn.textContent = '☀';
+    cardFlagBtn.addEventListener('click', e => { e.stopPropagation(); App.toggleDailyFlag(task.id); });
+    header.appendChild(cardFlagBtn);
+
     header.addEventListener('click', () => App.openTaskModal(task.id));
 
     const footer = document.createElement('div');
@@ -710,7 +718,13 @@ const Views = (() => {
       row.className = `tree-task status-${STATUS_CLASS[newStatus]}`;
     });
 
-    row.append(dot, name, catSel, prioSel, statusSel);
+    const treeFlagBtn = document.createElement('button');
+    treeFlagBtn.className = `list-flag-btn${task.daily_flag ? ' flagged' : ''}`;
+    treeFlagBtn.title = task.daily_flag ? 'Retirer du focus' : 'Ajouter au focus du jour';
+    treeFlagBtn.textContent = '☀';
+    treeFlagBtn.addEventListener('click', e => { e.stopPropagation(); App.toggleDailyFlag(task.id); });
+
+    row.append(dot, name, catSel, prioSel, statusSel, treeFlagBtn);
 
     if (task.deadline) {
       const dl = document.createElement('span');
