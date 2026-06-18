@@ -1,5 +1,8 @@
 // ─── Views: Liste, Kanban, Hiérarchie ─────────────────────────────────────
 
+function todayStr() { return new Date().toISOString().slice(0, 10); }
+function tomorrowStr() { const d = new Date(); d.setDate(d.getDate() + 1); return d.toISOString().slice(0, 10); }
+
 function renderMarkdown(text) {
   if (!text) return '';
   if (typeof marked !== 'undefined') return marked.parse(text);
@@ -282,7 +285,7 @@ const Views = (() => {
       const def = LIST_COLS.find(c => c.id === id);
       return def ? def.width : '80px';
     });
-    return `3px 90px 1fr ${toggleableWidths.join(' ')} 28px`;
+    return `3px 90px 1fr ${toggleableWidths.join(' ')} 28px 28px`;
   }
 
   function buildHeaderRow(colOrder, vis, sortBy, sortDir) {
@@ -324,8 +327,9 @@ const Views = (() => {
       row.appendChild(h);
     }
 
-    const editSpacer = document.createElement('span'); // edit btn column
-    row.appendChild(editSpacer);
+    const flagSpacer = document.createElement('span');
+    const editSpacer = document.createElement('span'); // nav btn column
+    row.append(flagSpacer, editSpacer);
 
     return row;
   }
@@ -354,6 +358,12 @@ const Views = (() => {
     nameText.className = 'list-name-text';
     nameText.textContent = task.name;
     nameLine.appendChild(nameText);
+    if (task.daily_flag && task.daily_flag_date && task.daily_flag_date < todayStr()) {
+      const badge = document.createElement('span');
+      badge.className = 'list-flag-badge';
+      badge.textContent = 'reporté';
+      nameLine.appendChild(badge);
+    }
     nameCell.appendChild(nameLine);
     if (task.notes) {
       const notesEl = document.createElement('div');
@@ -406,7 +416,15 @@ const Views = (() => {
       row.appendChild(c);
     }
 
-    row.appendChild(editBtn);
+    // Flag button
+    const flagBtn = document.createElement('button');
+    const isFlagged = !!task.daily_flag;
+    flagBtn.className = `list-flag-btn${isFlagged ? ' flagged' : ''}`;
+    flagBtn.title = isFlagged ? 'Retirer du focus' : 'Ajouter au focus du jour';
+    flagBtn.textContent = '☀';
+    flagBtn.addEventListener('click', e => { e.stopPropagation(); App.toggleDailyFlag(task.id); });
+
+    row.append(flagBtn, editBtn);
     return row;
   }
 
@@ -701,5 +719,86 @@ const Views = (() => {
     return row;
   }
 
-  return { renderList, renderKanban, renderHierarchy };
+  function renderFocus(container, state, actions) {
+    const today  = todayStr();
+    const STATUS_CLASS_LOCAL = { 'À faire': 'todo', 'En cours': 'inprogress', 'Bloqué': 'blocked', 'Terminé': 'done' };
+    const PRIO_COLOR = { 'Haute': 'var(--red)', 'Moyenne': 'var(--orange)', 'Basse': 'var(--gray-500)' };
+
+    const flagged = state.tasks.filter(t => t.daily_flag);
+    const reported = flagged.filter(t => t.daily_flag_date && t.daily_flag_date < today);
+    const current  = flagged.filter(t => !t.daily_flag_date || t.daily_flag_date >= today);
+
+    const wrap = document.createElement('div');
+    wrap.className = 'view-focus';
+
+    const header = document.createElement('div');
+    header.className = 'focus-header';
+    const dFmt = new Date().toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' });
+    header.innerHTML = `<h2>☀ Focus du Jour</h2><span class="focus-header-sub">${dFmt} — ${flagged.length} tâche${flagged.length !== 1 ? 's' : ''}</span>`;
+    wrap.appendChild(header);
+
+    if (!flagged.length) {
+      const empty = document.createElement('div');
+      empty.className = 'focus-empty';
+      empty.innerHTML = `<strong>Aucune tâche en focus</strong>Dans la vue Liste, cliquez sur ☀ à côté d'une tâche pour l'ajouter au focus du jour (5 max).`;
+      wrap.appendChild(empty);
+      container.appendChild(wrap);
+      return;
+    }
+
+    const list = document.createElement('div');
+    list.className = 'focus-list';
+
+    [...reported, ...current].forEach(task => {
+      const isReported = reported.includes(task);
+      const color = clientColor(state, task.projectId);
+      const cName = clientName(state, task.projectId);
+      const pName = projectName(state, task.projectId);
+
+      const card = document.createElement('div');
+      card.className = `focus-card${isReported ? ' reported' : ''}`;
+
+      const colorBar = document.createElement('div');
+      colorBar.className = 'focus-card-color';
+      colorBar.style.background = color;
+
+      const body = document.createElement('div');
+      body.className = 'focus-card-body';
+      body.innerHTML = `
+        <div class="focus-card-meta">${cName}${pName ? ' › ' + pName : ''}</div>
+        <div class="focus-card-name">${task.name}</div>
+        <div class="focus-card-badges">
+          <span class="inline-select s-${STATUS_CLASS_LOCAL[task.status] || 'todo'}" style="font-size:.72rem;padding:.1rem .4rem">${task.status}</span>
+          ${isReported ? '<span class="focus-reported-badge">↩ reporté</span>' : ''}
+          ${task.deadline ? `<span style="font-size:.72rem;color:var(--gray-500)">${task.deadline}</span>` : ''}
+        </div>
+      `;
+
+      const actionsWrap = document.createElement('div');
+      actionsWrap.className = 'focus-card-actions';
+
+      function btn(label, cls, handler) {
+        const b = document.createElement('button');
+        b.className = `focus-action-btn ${cls}`;
+        b.textContent = label;
+        b.addEventListener('click', handler);
+        return b;
+      }
+
+      if (task.status !== 'Terminé') {
+        actionsWrap.appendChild(btn('✅ Terminé', 'done',   () => actions.markDone(task.id)));
+        actionsWrap.appendChild(btn('⏸ Bloqué',  'block',  () => actions.markBlocked(task.id)));
+      }
+      actionsWrap.appendChild(btn('↩ Reporter',  'snooze', () => actions.snooze(task.id)));
+      actionsWrap.appendChild(btn('✖ Retirer',   'remove', () => actions.remove(task.id)));
+
+      card.append(colorBar, body, actionsWrap);
+      list.appendChild(card);
+    });
+
+    wrap.appendChild(list);
+    container.appendChild(wrap);
+  }
+
+  return { renderList, renderKanban, renderHierarchy, renderFocus };
 })();

@@ -87,6 +87,10 @@ a { color: inherit; text-decoration: none; }
 }
 .view-btn:hover { background: rgba(255,255,255,.12); color: var(--white); }
 .view-btn.active { background: rgba(255,255,255,.2); color: var(--white); font-weight: 600; }
+.view-sep { width: 1px; height: 18px; background: rgba(255,255,255,.2); margin: 0 .15rem; align-self: center; }
+.view-btn-focus { color: rgba(255,220,100,.85); }
+.view-btn-focus:hover { color: #FFD700; }
+.view-btn-focus.active { background: rgba(255,200,0,.18); color: #FFD700; }
 
 .header-actions { display: flex; gap: .4rem; align-items: center; }
 .btn-header {
@@ -384,6 +388,132 @@ a { color: inherit; text-decoration: none; }
 }
 .filter-reset:hover { color: var(--red); border-color: var(--red); }
 
+/* ── Variant selector ────────────────────────────────────────────────────── */
+.filter-sep {
+  width: 1px; height: 20px;
+  background: var(--gray-300);
+  flex-shrink: 0;
+}
+.variant-wrap { position: relative; }
+.variant-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: .28rem;
+  padding: .3rem .6rem;
+  height: 30px;
+  border: 1px solid var(--gray-300);
+  border-radius: var(--radius);
+  font-size: .8rem;
+  background: var(--white);
+  color: var(--gray-700);
+  white-space: nowrap;
+  transition: border-color .15s, color .15s;
+}
+.variant-btn:hover { border-color: var(--blue); color: var(--blue); }
+.variant-btn.has-variant { background: var(--blue-light); border-color: var(--blue); color: var(--blue); font-weight: 600; }
+.variant-btn-star { color: var(--orange); font-size: .75rem; visibility: hidden; }
+.variant-btn.has-variant .variant-btn-star { visibility: visible; }
+.variant-btn-chevron { font-size: .6rem; color: var(--gray-500); margin-left: .1rem; }
+
+.variant-panel {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  z-index: 300;
+  background: var(--white);
+  border: 1px solid var(--gray-200);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  min-width: 230px;
+  overflow: hidden;
+}
+.vp-search-wrap {
+  padding: .5rem .75rem;
+  border-bottom: 1px solid var(--gray-100);
+}
+.vp-search {
+  width: 100%;
+  border: 1px solid var(--gray-300);
+  border-radius: var(--radius);
+  padding: .28rem .55rem;
+  font-size: .8rem;
+  background: var(--white);
+}
+.vp-search:focus { outline: 2px solid var(--blue); outline-offset: -1px; }
+.vp-list { max-height: 250px; overflow-y: auto; padding: .3rem 0; }
+.vp-item {
+  display: flex;
+  align-items: center;
+  gap: .45rem;
+  padding: .45rem .9rem;
+  font-size: .84rem;
+  cursor: pointer;
+  transition: background .1s;
+}
+.vp-item:hover { background: var(--gray-100); }
+.vp-item.active { background: var(--blue-light); color: var(--blue); font-weight: 600; }
+.vp-item-star { color: var(--orange); font-size: .75rem; width: 14px; text-align: center; flex-shrink: 0; }
+.vp-footer {
+  border-top: 1px solid var(--gray-200);
+  padding: .5rem .75rem;
+  display: flex;
+  gap: .4rem;
+}
+.vp-footer button {
+  flex: 1;
+  padding: .3rem .5rem;
+  font-size: .77rem;
+  font-weight: 600;
+  border-radius: var(--radius);
+  border: 1px solid var(--gray-300);
+  background: var(--white);
+  color: var(--gray-700);
+  cursor: pointer;
+  transition: background .1s;
+}
+.vp-footer button:hover { background: var(--gray-100); }
+.vp-save-btn { border-color: var(--blue) !important; color: var(--blue) !important; }
+.vp-save-btn:hover { background: var(--blue-light) !important; }
+
+/* Manage variants table */
+.variants-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: .84rem;
+}
+.variants-table th {
+  font-size: .68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .05em;
+  color: var(--gray-500);
+  padding: .4rem .6rem;
+  border-bottom: 2px solid var(--gray-200);
+  text-align: left;
+}
+.variants-table td {
+  padding: .4rem .6rem;
+  border-bottom: 1px solid var(--gray-100);
+  vertical-align: middle;
+}
+.vt-name-input {
+  width: 100%;
+  border: 1px solid transparent;
+  border-radius: var(--radius);
+  padding: .28rem .5rem;
+  font-size: .84rem;
+  background: transparent;
+  transition: border-color .15s, background .15s;
+}
+.vt-name-input:focus { outline: none; border-color: var(--blue); background: var(--white); }
+.modal-footer {
+  padding: .75rem 1.25rem;
+  border-top: 1px solid var(--gray-200);
+  display: flex;
+  justify-content: flex-end;
+  gap: .5rem;
+}
+
 /* ── Main content ───────────────────────────────────────────────────────── */
 .app-main { flex: 1; padding: 1rem 1.25rem; overflow: auto; }
 
@@ -395,6 +525,93 @@ a { color: inherit; text-decoration: none; }
   transition: background .1s, color .1s;
 }
 .list-nav-btn:hover { background: var(--blue-light); color: var(--blue); }
+
+/* ── Daily flag button (liste) ──────────────────────────────────────────── */
+.list-flag-btn {
+  width: 28px; height: 28px; flex-shrink: 0;
+  border-radius: var(--radius); font-size: .95rem;
+  color: var(--gray-300);
+  display: flex; align-items: center; justify-content: center;
+  transition: background .1s, color .1s;
+  cursor: pointer;
+}
+.list-flag-btn:hover { color: #F59E0B; background: #FEF3C7; }
+.list-flag-btn.flagged { color: #F59E0B; }
+.list-flag-btn.flagged:hover { color: #B45309; background: #FEF3C7; }
+.list-flag-badge {
+  display: inline-block;
+  font-size: .6rem;
+  font-weight: 700;
+  padding: .05rem .28rem;
+  border-radius: 3px;
+  background: #FEF3C7;
+  color: #B45309;
+  margin-left: .3rem;
+  vertical-align: middle;
+}
+
+/* ── Vue Focus du Jour ───────────────────────────────────────────────────── */
+.view-focus { display: flex; flex-direction: column; gap: 0; }
+.focus-header {
+  padding: .9rem 1.25rem .6rem;
+  border-bottom: 1px solid var(--gray-200);
+  background: var(--white);
+  display: flex;
+  align-items: baseline;
+  gap: 1rem;
+}
+.focus-header h2 { font-size: 1rem; font-weight: 700; }
+.focus-header-sub { font-size: .8rem; color: var(--gray-500); }
+.focus-empty {
+  padding: 3rem 1.25rem;
+  text-align: center;
+  color: var(--gray-500);
+  font-size: .9rem;
+}
+.focus-empty strong { display: block; font-size: 1.2rem; margin-bottom: .4rem; color: var(--gray-700); }
+.focus-list { display: flex; flex-direction: column; gap: 0; }
+.focus-card {
+  display: flex;
+  align-items: center;
+  gap: .75rem;
+  padding: .7rem 1.25rem;
+  border-bottom: 1px solid var(--gray-100);
+  background: var(--white);
+  transition: background .1s;
+}
+.focus-card:hover { background: var(--gray-50); }
+.focus-card.reported { background: #FFFBEB; }
+.focus-card.reported:hover { background: #FEF3C7; }
+.focus-card-color { width: 3px; height: 36px; border-radius: 2px; flex-shrink: 0; }
+.focus-card-body { flex: 1; min-width: 0; }
+.focus-card-meta { font-size: .72rem; color: var(--gray-500); margin-bottom: .15rem; }
+.focus-card-name { font-size: .9rem; font-weight: 600; color: var(--gray-900); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.focus-card-badges { display: flex; gap: .35rem; margin-top: .25rem; align-items: center; flex-wrap: wrap; }
+.focus-reported-badge {
+  font-size: .65rem; font-weight: 700; padding: .1rem .35rem;
+  background: #FEF3C7; color: #B45309; border-radius: 3px;
+}
+.focus-card-actions { display: flex; gap: .35rem; flex-shrink: 0; }
+.focus-action-btn {
+  padding: .28rem .55rem;
+  font-size: .75rem;
+  border-radius: var(--radius);
+  border: 1px solid var(--gray-300);
+  background: var(--white);
+  color: var(--gray-700);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background .1s, border-color .1s, color .1s;
+}
+.focus-action-btn:hover { background: var(--gray-100); }
+.focus-action-btn.done  { border-color: var(--green);  color: var(--green);  }
+.focus-action-btn.done:hover  { background: #E6F7F1; }
+.focus-action-btn.block { border-color: var(--red);    color: var(--red);    }
+.focus-action-btn.block:hover { background: #FEF0F0; }
+.focus-action-btn.snooze { border-color: #F59E0B; color: #B45309; }
+.focus-action-btn.snooze:hover { background: #FFFBEB; }
+.focus-action-btn.remove { border-color: var(--gray-300); color: var(--gray-500); }
+.focus-action-btn.remove:hover { border-color: var(--red); color: var(--red); background: #FEF0F0; }
 
 /* ════════════════════════════════════════════════════════════════════════
    VUE DÉTAIL TÂCHE (page complète)

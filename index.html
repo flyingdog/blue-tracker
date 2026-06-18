@@ -10,7 +10,7 @@
   <!-- Favicon inline SVG -->
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%23185FA5'/><text x='16' y='22' text-anchor='middle' fill='white' font-size='18' font-family='system-ui' font-weight='700'>B</text></svg>">
 
-  <link rel="stylesheet" href="css/style.css?v=16">
+  <link rel="stylesheet" href="css/style.css?v=17">
 
   <!-- Markdown parser -->
   <script src="https://cdn.jsdelivr.net/npm/marked@9/marked.min.js"></script>
@@ -35,6 +35,8 @@
       <button class="view-btn active" data-view="list"      aria-pressed="true">≡ Liste</button>
       <button class="view-btn"        data-view="kanban"    aria-pressed="false">⊞ Kanban</button>
       <button class="view-btn"        data-view="hierarchy" aria-pressed="false">⊟ Hiérarchie</button>
+      <span class="view-sep"></span>
+      <button class="view-btn view-btn-focus" data-view="focus" aria-pressed="false">☀ Focus</button>
     </div>
 
     <div class="header-spacer"></div>
@@ -50,6 +52,14 @@
 
   <!-- ── Filter bar ─────────────────────────────────────────────────────── -->
   <div class="filter-bar" role="search" aria-label="Filtres">
+    <div class="variant-wrap">
+      <button id="variant-btn" class="variant-btn" title="Variantes d'affichage">
+        <span class="variant-btn-star">★</span>
+        <span id="variant-btn-label">Standard</span>
+        <span class="variant-btn-chevron">▾</span>
+      </button>
+    </div>
+    <span class="filter-sep"></span>
     <select id="filter-client"   aria-label="Filtrer par client">
       <option value="">Tous les clients</option>
     </select>

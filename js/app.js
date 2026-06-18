@@ -22,8 +22,10 @@ const App = (() => {
   }
 
   // ── State ───────────────────────────────────────────────────────────────────
-  let state = { clients: [], projects: [], deliverables: [], tasks: [] };
+  let state = { clients: [], projects: [], deliverables: [], tasks: [], variants: [] };
   let currentView = 'list';
+  let currentVariantId = null;
+  let _refreshProjectsFilter = () => {};
   let filters = {};
   let listOptions = {
     columns:     { client: true, project: true, deliverable: true, category: true, priority: true, deadline: true, updated: true },
@@ -56,12 +58,42 @@ const App = (() => {
   function renderView() {
     const container = $view();
     const fb = document.querySelector('.filter-bar');
-    if (fb) fb.style.display = '';
+    if (fb) fb.style.display = currentView === 'focus' ? 'none' : '';
+    container.innerHTML = '';
     container.className = `view-${currentView}`;
-    if (currentView === 'list')        Views.renderList(container, state, filters, listOptions);
-    else if (currentView === 'kanban') Views.renderKanban(container, state, filters);
-    else                               Views.renderHierarchy(container, state, filters);
+    if (currentView === 'list') {
+      Views.renderList(container, state, filters, listOptions);
+    } else if (currentView === 'kanban') {
+      Views.renderKanban(container, state, filters);
+    } else if (currentView === 'hierarchy') {
+      Views.renderHierarchy(container, state, filters);
+    } else if (currentView === 'focus') {
+      Views.renderFocus(container, state, {
+        markDone(taskId) {
+          const t = state.tasks.find(t => t.id === taskId);
+          if (t) { t.status = 'Terminé'; t.daily_flag = false; t.updatedAt = new Date().toISOString(); }
+          markDirty(); renderView();
+        },
+        markBlocked(taskId) {
+          const t = state.tasks.find(t => t.id === taskId);
+          if (t) { t.status = 'Bloqué'; t.updatedAt = new Date().toISOString(); }
+          markDirty(); renderView();
+        },
+        snooze(taskId) {
+          const t = state.tasks.find(t => t.id === taskId);
+          if (t) { t.daily_flag_date = tomorrowStr(); }
+          markDirty(); renderView();
+        },
+        remove(taskId) {
+          const t = state.tasks.find(t => t.id === taskId);
+          if (t) { t.daily_flag = false; t.daily_flag_date = null; }
+          markDirty(); renderView();
+        },
+      });
+    }
   }
+
+  function tomorrowStr() { const d = new Date(); d.setDate(d.getDate() + 1); return d.toISOString().slice(0, 10); }
 
   // ── Paramètres de vue (modal Fiori) ──────────────────────────────────────
   const DEFAULT_OPTIONS = {
@@ -251,6 +283,272 @@ const App = (() => {
     renderView();
   }
 
+  // ── Variantes ────────────────────────────────────────────────────────────────
+  function captureVariantState() {
+    return {
+      view: currentView,
+      filters: { ...filters },
+      listOptions: {
+        columns:     { ...listOptions.columns },
+        columnOrder: [...listOptions.columnOrder],
+        groupBy:     listOptions.groupBy,
+        sortBy:      listOptions.sortBy,
+        sortDir:     listOptions.sortDir,
+      },
+    };
+  }
+
+  function updateVariantBtn() {
+    const btn   = $('variant-btn');
+    const label = $('variant-btn-label');
+    if (!btn || !label) return;
+    const v = currentVariantId ? (state.variants || []).find(v => v.id === currentVariantId) : null;
+    label.textContent = v ? v.name : 'Standard';
+    btn.classList.toggle('has-variant', !!v);
+  }
+
+  function applyVariant(variant) {
+    if (variant.listOptions) {
+      listOptions = {
+        ...DEFAULT_OPTIONS,
+        ...variant.listOptions,
+        columns:     { ...DEFAULT_OPTIONS.columns,     ...(variant.listOptions.columns || {}) },
+        columnOrder: variant.listOptions.columnOrder ? [...variant.listOptions.columnOrder] : [...DEFAULT_OPTIONS.columnOrder],
+      };
+    }
+    filters = variant.filters ? { ...variant.filters } : {};
+    const el = id => $(id);
+    el('filter-client')  .value = filters.client   || '';
+    el('filter-project') .value = filters.project  || '';
+    el('filter-category').value = filters.category || '';
+    el('filter-priority').value = filters.priority || '';
+    el('filter-status')  .value = filters.status   || '';
+    el('filter-search')  .value = filters.search   || '';
+    _refreshProjectsFilter(filters.client || '');
+    currentVariantId = variant.id;
+    updateVariantBtn();
+    setView(variant.view || 'list');
+  }
+
+  function applyStandard() {
+    listOptions = {
+      ...DEFAULT_OPTIONS,
+      columns:     { ...DEFAULT_OPTIONS.columns },
+      columnOrder: [...DEFAULT_OPTIONS.columnOrder],
+    };
+    filters = {};
+    ['filter-client','filter-project','filter-category','filter-priority','filter-status','filter-search']
+      .forEach(id => { const el = $(id); if (el) el.value = ''; });
+    _refreshProjectsFilter('');
+    currentVariantId = null;
+    updateVariantBtn();
+    renderView();
+  }
+
+  function openVariantPanel() {
+    const btn = $('variant-btn');
+
+    // Toggle: si déjà ouvert, fermer
+    const existing = $('variant-panel');
+    if (existing) { existing.remove(); return; }
+
+    const panel = document.createElement('div');
+    panel.id = 'variant-panel';
+    panel.className = 'variant-panel';
+    btn.parentNode.appendChild(panel);
+
+    function closePanel() {
+      panel.remove();
+      document.removeEventListener('click', onOutside, true);
+    }
+    function onOutside(e) {
+      if (!panel.contains(e.target) && e.target !== btn) closePanel();
+    }
+    setTimeout(() => document.addEventListener('click', onOutside, true), 0);
+
+    const variants = state.variants || [];
+    panel.innerHTML = `
+      ${variants.length > 5 ? `<div class="vp-search-wrap"><input class="vp-search" placeholder="Rechercher…" type="text"></div>` : ''}
+      <div class="vp-list">
+        <div class="vp-item ${!currentVariantId ? 'active' : ''}" data-vid="__standard__">
+          <span class="vp-item-star"></span>
+          <span class="vp-item-name">Standard</span>
+        </div>
+        ${variants.map(v => `
+          <div class="vp-item ${v.id === currentVariantId ? 'active' : ''}" data-vid="${v.id}">
+            <span class="vp-item-star">${v.isDefault ? '★' : ''}</span>
+            <span class="vp-item-name">${v.name}</span>
+          </div>
+        `).join('')}
+      </div>
+      <div class="vp-footer">
+        <button class="vp-save-btn">Enregistrer sous…</button>
+        <button class="vp-manage-btn">Gérer…</button>
+      </div>
+    `;
+
+    panel.querySelectorAll('.vp-item').forEach(item => {
+      item.addEventListener('click', () => {
+        const vid = item.dataset.vid;
+        closePanel();
+        if (vid === '__standard__') applyStandard();
+        else {
+          const v = (state.variants || []).find(v => v.id === vid);
+          if (v) applyVariant(v);
+        }
+      });
+    });
+
+    panel.querySelector('.vp-search')?.addEventListener('input', e => {
+      const q = e.target.value.toLowerCase();
+      panel.querySelectorAll('.vp-item').forEach(item => {
+        item.style.display = item.querySelector('.vp-item-name').textContent.toLowerCase().includes(q) ? '' : 'none';
+      });
+    });
+
+    panel.querySelector('.vp-save-btn').addEventListener('click', () => {
+      closePanel();
+      openSaveVariantModal();
+    });
+    panel.querySelector('.vp-manage-btn').addEventListener('click', () => {
+      closePanel();
+      openManageVariantsModal();
+    });
+  }
+
+  function openSaveVariantModal() {
+    const overlay = $modal();
+    overlay.innerHTML = '';
+    overlay.classList.remove('hidden');
+
+    const currentV = currentVariantId ? (state.variants || []).find(v => v.id === currentVariantId) : null;
+
+    const modal = document.createElement('div');
+    modal.className = 'modal';
+    modal.style.maxWidth = '380px';
+    modal.innerHTML = `
+      <div class="modal-header">
+        <h2>Enregistrer la variante</h2>
+        <button class="modal-close" aria-label="Fermer">✕</button>
+      </div>
+      <div class="modal-form" style="gap:.75rem">
+        <label>Nom *
+          <input type="text" id="variant-name-input" value="${currentV?.name || ''}" placeholder="Nom de la variante" autocomplete="off">
+        </label>
+        <label style="flex-direction:row;align-items:center;gap:.5rem;font-size:.84rem;cursor:pointer;font-weight:400">
+          <input type="checkbox" id="variant-default-cb" ${currentV?.isDefault ? 'checked' : ''}>
+          Variante par défaut
+        </label>
+        <div class="form-actions">
+          <button type="button" class="btn btn-secondary modal-cancel">Annuler</button>
+          <button type="button" class="btn btn-primary" id="variant-save-ok">Enregistrer</button>
+        </div>
+      </div>
+    `;
+
+    modal.querySelector('.modal-close').addEventListener('click', closeModal);
+    modal.querySelector('.modal-cancel').addEventListener('click', closeModal);
+    overlay.addEventListener('click', e => { if (e.target === overlay) closeModal(); });
+
+    modal.querySelector('#variant-save-ok').addEventListener('click', () => {
+      const name = modal.querySelector('#variant-name-input').value.trim();
+      if (!name) { modal.querySelector('#variant-name-input').focus(); return; }
+      const isDefault = modal.querySelector('#variant-default-cb').checked;
+
+      if (!state.variants) state.variants = [];
+      if (isDefault) state.variants.forEach(v => { v.isDefault = false; });
+
+      // Mettre à jour si même nom, sinon créer
+      const existing = state.variants.find(v => v.name === name);
+      if (existing) {
+        Object.assign(existing, { isDefault, ...captureVariantState() });
+        currentVariantId = existing.id;
+      } else {
+        const v = { id: uid(), name, isDefault, ...captureVariantState() };
+        state.variants.push(v);
+        currentVariantId = v.id;
+      }
+
+      markDirty();
+      updateVariantBtn();
+      closeModal();
+    });
+
+    overlay.appendChild(modal);
+    setTimeout(() => modal.querySelector('#variant-name-input').focus(), 50);
+  }
+
+  function openManageVariantsModal() {
+    const overlay = $modal();
+    overlay.innerHTML = '';
+    overlay.classList.remove('hidden');
+
+    const modal = document.createElement('div');
+    modal.className = 'modal modal-wide';
+
+    function render() {
+      const variants = state.variants || [];
+      modal.innerHTML = `
+        <div class="modal-header">
+          <h2>Gérer les variantes</h2>
+          <button class="modal-close" aria-label="Fermer">✕</button>
+        </div>
+        <div class="modal-body">
+          ${!variants.length ? '<p class="empty-state" style="padding:1.5rem 1.25rem">Aucune variante sauvegardée.</p>' : `
+          <table class="variants-table">
+            <thead><tr>
+              <th>Nom</th>
+              <th style="text-align:center;width:90px">Par défaut</th>
+              <th style="width:36px"></th>
+            </tr></thead>
+            <tbody>
+              ${variants.map(v => `
+                <tr>
+                  <td><input class="vt-name-input" type="text" value="${v.name}" data-id="${v.id}"></td>
+                  <td style="text-align:center"><input type="radio" name="vt-default" value="${v.id}" ${v.isDefault ? 'checked' : ''}></td>
+                  <td><button class="btn btn-danger btn-sm vt-delete-btn" data-id="${v.id}" title="Supprimer">✕</button></td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>`}
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary modal-cancel">Fermer</button>
+          ${variants.length ? `<button class="btn btn-primary" id="vt-save-btn">Enregistrer</button>` : ''}
+        </div>
+      `;
+
+      modal.querySelector('.modal-close').addEventListener('click', closeModal);
+      modal.querySelector('.modal-cancel').addEventListener('click', closeModal);
+      overlay.addEventListener('click', e => { if (e.target === overlay) closeModal(); });
+
+      modal.querySelector('#vt-save-btn')?.addEventListener('click', () => {
+        const defaultId = modal.querySelector('[name="vt-default"]:checked')?.value || null;
+        modal.querySelectorAll('.vt-name-input').forEach(input => {
+          const v = state.variants.find(v => v.id === input.dataset.id);
+          if (v) { v.name = input.value.trim() || v.name; v.isDefault = v.id === defaultId; }
+        });
+        markDirty();
+        updateVariantBtn();
+        closeModal();
+      });
+
+      modal.querySelectorAll('.vt-delete-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const id = btn.dataset.id;
+          if (id === currentVariantId) { currentVariantId = null; }
+          state.variants = state.variants.filter(v => v.id !== id);
+          markDirty();
+          updateVariantBtn();
+          render();
+        });
+      });
+    }
+
+    render();
+    overlay.appendChild(modal);
+  }
+
   // ── Filtres ──────────────────────────────────────────────────────────────────
   function buildFilterBar() {
     const clientSel  = $('filter-client');
@@ -264,8 +562,8 @@ const App = (() => {
       clientSel.appendChild(o);
     });
 
-    // Projects (full list initially)
-    function refreshProjects(clientId) {
+    // Projects — expose as module-level function for applyVariant
+    _refreshProjectsFilter = function(clientId) {
       projectSel.innerHTML = '<option value="">Tous les projets</option>';
       state.projects
         .filter(p => !clientId || p.clientId === clientId)
@@ -274,14 +572,14 @@ const App = (() => {
           o.value = p.id; o.textContent = p.name;
           projectSel.appendChild(o);
         });
-    }
-    refreshProjects('');
+    };
+    _refreshProjectsFilter('');
 
     clientSel.addEventListener('change', () => {
       filters.client = clientSel.value || null;
       filters.project = null;
       projectSel.value = '';
-      refreshProjects(clientSel.value);
+      _refreshProjectsFilter(clientSel.value);
       renderView();
     });
     projectSel.addEventListener('change', () => {
@@ -306,9 +604,13 @@ const App = (() => {
       filters = {};
       ['filter-client','filter-project','filter-category','filter-priority','filter-status','filter-search']
         .forEach(id => { const el = $(id); if (el) el.value = ''; });
-      refreshProjects('');
+      _refreshProjectsFilter('');
+      currentVariantId = null;
+      updateVariantBtn();
       renderView();
     });
+
+    $('variant-btn').addEventListener('click', openVariantPanel);
   }
 
   // ── Vue détail tâche (navigation full-page Fiori) ────────────────────────
@@ -819,8 +1121,37 @@ const App = (() => {
       if ($view().className === 'view-task-detail') renderView();
     });
 
+    if (!state.variants) state.variants = [];
+
+    // F3 — nettoyer les flags des tâches terminées
+    let flagDirty = false;
+    state.tasks.forEach(t => {
+      if (t.daily_flag && t.status === 'Terminé') { t.daily_flag = false; t.daily_flag_date = null; flagDirty = true; }
+    });
+    if (flagDirty) markDirty();
+
     buildFilterBar();
-    setView('list');
+
+    const defaultV = state.variants.find(v => v.isDefault);
+    if (defaultV) applyVariant(defaultV);
+    else setView('list');
+  }
+
+  // ── Focus du Jour ────────────────────────────────────────────────────────────
+  function toggleDailyFlag(taskId) {
+    const task = state.tasks.find(t => t.id === taskId);
+    if (!task) return;
+    if (task.daily_flag) {
+      task.daily_flag = false;
+      task.daily_flag_date = null;
+    } else {
+      const flagged = state.tasks.filter(t => t.daily_flag).length;
+      if (flagged >= 5) { alert('Vous avez déjà 5 tâches dans le focus du jour.'); return; }
+      task.daily_flag = true;
+      task.daily_flag_date = new Date().toISOString().slice(0, 10);
+    }
+    markDirty();
+    renderView();
   }
 
   function updateTaskField(taskId, field, value) {
@@ -832,7 +1163,7 @@ const App = (() => {
   }
 
   // Public surface used by Views
-  return { init, openTaskModal: openTaskDetail, openTaskDetail, openProjectModal, openClientModal, updateTaskField, openViewSettingsModal, sortByHeader };
+  return { init, openTaskModal: openTaskDetail, openTaskDetail, openProjectModal, openClientModal, updateTaskField, openViewSettingsModal, sortByHeader, toggleDailyFlag };
 })();
 
 document.addEventListener('DOMContentLoaded', App.init);
