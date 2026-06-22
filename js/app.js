@@ -653,6 +653,7 @@ const App = (() => {
           value="${(task?.name || '').replace(/"/g,'&quot;')}"
           placeholder="Nom de la tâche"
           autocomplete="off">
+        ${!isNew ? `<button type="button" id="td-focus-btn" class="td-focus-btn${task?.daily_flag ? ' flagged' : ''}" title="${task?.daily_flag ? 'Retirer du focus' : 'Ajouter au focus du jour'}">☀</button>` : ''}
       </div>
       <form id="task-detail-form" class="td-form-page">
         <div class="td-fields-grid">
@@ -701,13 +702,13 @@ const App = (() => {
           <div class="notes-editor-header">
             <span class="td-field-label">Notes</span>
             <div class="notes-tab-group">
-              <button type="button" class="notes-tab active" data-ntab="edit">Markdown</button>
-              <button type="button" class="notes-tab" data-ntab="preview">Aperçu</button>
+              <button type="button" class="notes-tab" data-ntab="edit">Markdown</button>
+              <button type="button" class="notes-tab active" data-ntab="preview">Aperçu</button>
             </div>
           </div>
-          <textarea name="notes" class="notes-textarea" style="min-height:220px"
+          <textarea name="notes" class="notes-textarea hidden" style="min-height:220px"
             placeholder="Remarques, contexte… (Markdown supporté)">${(task?.notes || '').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</textarea>
-          <div class="notes-preview-pane hidden"></div>
+          <div class="notes-preview-pane"></div>
         </div>
         <div class="td-form-footer">
           ${!isNew ? `<button type="button" class="btn btn-danger td-delete-btn">Supprimer</button>` : '<span></span>'}
@@ -754,8 +755,33 @@ const App = (() => {
     colorSelect(form.querySelector('[name="priority"]'),  'priority');
     colorSelect(form.querySelector('[name="status"]'),    'status');
 
+    // Bouton focus dans le détail
+    const focusBtn = container.querySelector('#td-focus-btn');
+    if (focusBtn) {
+      focusBtn.addEventListener('click', () => {
+        const t = state.tasks.find(t => t.id === taskId);
+        if (!t) return;
+        if (t.daily_flag) {
+          t.daily_flag = false; t.daily_flag_date = null;
+        } else {
+          const count = state.tasks.filter(t => t.daily_flag).length;
+          if (count >= 5) { alert('Vous avez déjà 5 tâches dans le focus du jour.'); return; }
+          t.daily_flag = true; t.daily_flag_date = new Date().toISOString().slice(0, 10);
+        }
+        markDirty();
+        focusBtn.classList.toggle('flagged', !!t.daily_flag);
+        focusBtn.title = t.daily_flag ? 'Retirer du focus' : 'Ajouter au focus du jour';
+      });
+    }
+
     const notesTextarea = form.querySelector('.notes-textarea');
     const notesPreview  = form.querySelector('.notes-preview-pane');
+
+    // Aperçu par défaut
+    notesPreview.innerHTML = (typeof renderMarkdown !== 'undefined')
+      ? renderMarkdown(notesTextarea.value)
+      : (notesTextarea.value || '<em style="color:var(--gray-500)">Aucune note.</em>');
+
     form.querySelectorAll('[data-ntab]').forEach(tab => {
       tab.addEventListener('click', () => {
         form.querySelectorAll('[data-ntab]').forEach(t => t.classList.remove('active'));

@@ -211,11 +211,15 @@ const Views = (() => {
     footer.className = 'card-footer';
     footer.appendChild(categorySelect(task));
     footer.appendChild(prioritySelect(task));
-    if (task.deadline) {
-      const dl = document.createElement('span');
-      dl.className = `deadline${isOverdue(task.deadline, task.status) ? ' overdue' : ''}`;
-      dl.textContent = fmtDate(task.deadline);
-      footer.appendChild(dl);
+    {
+      const dlInput = document.createElement('input');
+      dlInput.type = 'date'; dlInput.value = task.deadline || '';
+      dlInput.className = 'deadline-input' + (isOverdue(task.deadline, task.status) ? ' overdue' : '');
+      dlInput.addEventListener('change', e => {
+        App.updateTaskField(task.id, 'deadline', e.target.value || null);
+        dlInput.classList.toggle('overdue', isOverdue(e.target.value, task.status));
+      });
+      footer.appendChild(dlInput);
     }
 
     card.appendChild(header);
@@ -368,6 +372,8 @@ const Views = (() => {
     const nameText = document.createElement('span');
     nameText.className = 'list-name-text';
     nameText.textContent = task.name;
+    nameText.style.cursor = 'pointer';
+    nameText.addEventListener('click', e => { e.stopPropagation(); App.openTaskDetail(task.id); });
     nameLine.appendChild(nameText);
     if (task.daily_flag && task.daily_flag_date && task.daily_flag_date < todayStr()) {
       const badge = document.createElement('span');
@@ -415,10 +421,20 @@ const Views = (() => {
           c.className = 'list-prio';
           c.appendChild(prioritySelect(task));
           break;
-        case 'deadline':
+        case 'deadline': {
           c.className = `list-deadline${overdue ? ' overdue' : ''}`;
-          c.textContent = fmtDate(task.deadline);
+          const dlInput = document.createElement('input');
+          dlInput.type = 'date'; dlInput.value = task.deadline || '';
+          dlInput.className = 'deadline-input' + (overdue ? ' overdue' : '');
+          dlInput.addEventListener('change', e => {
+            App.updateTaskField(task.id, 'deadline', e.target.value || null);
+            const od = isOverdue(e.target.value, task.status);
+            dlInput.classList.toggle('overdue', od);
+            c.classList.toggle('overdue', od);
+          });
+          c.appendChild(dlInput);
           break;
+        }
         case 'updated':
           c.className = 'list-updated';
           c.textContent = fmtUpdated(task.updatedAt);
@@ -726,11 +742,15 @@ const Views = (() => {
 
     row.append(dot, name, catSel, prioSel, statusSel, treeFlagBtn);
 
-    if (task.deadline) {
-      const dl = document.createElement('span');
-      dl.className = `tree-task-deadline${overdue ? ' overdue' : ''}`;
-      dl.textContent = fmtDate(task.deadline);
-      row.appendChild(dl);
+    {
+      const dlInput = document.createElement('input');
+      dlInput.type = 'date'; dlInput.value = task.deadline || '';
+      dlInput.className = 'deadline-input' + (overdue ? ' overdue' : '');
+      dlInput.addEventListener('change', e => {
+        App.updateTaskField(task.id, 'deadline', e.target.value || null);
+        dlInput.classList.toggle('overdue', isOverdue(e.target.value, task.status));
+      });
+      row.appendChild(dlInput);
     }
 
     return row;
