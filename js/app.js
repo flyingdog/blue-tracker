@@ -25,7 +25,7 @@ const App = (() => {
   let state = { clients: [], projects: [], deliverables: [], tasks: [], variants: [] };
   let currentView = 'list';
   let currentVariantId = null;
-  let _refreshProjectsFilter = () => {};
+  let filterComps = {};
   let filters = {};
   let listOptions = {
     columns:     { client: true, project: true, deliverable: true, category: true, priority: true, deadline: true, updated: true },
@@ -317,14 +317,19 @@ const App = (() => {
       };
     }
     filters = variant.filters ? { ...variant.filters } : {};
-    const el = id => $(id);
-    el('filter-client')  .value = filters.client   || '';
-    el('filter-project') .value = filters.project  || '';
-    el('filter-category').value = filters.category || '';
-    el('filter-priority').value = filters.priority || '';
-    el('filter-status')  .value = filters.status   || '';
-    el('filter-search')  .value = filters.search   || '';
-    _refreshProjectsFilter(filters.client || '');
+    // Normalize legacy single-value filters to arrays
+    const toArr = v => Array.isArray(v) ? v : (v ? [v] : []);
+    const clientVals = toArr(filters.client);
+    const projItems  = state.projects
+      .filter(p => !clientVals.length || clientVals.includes(p.clientId))
+      .map(p => ({ value: p.id, label: p.name }));
+    filterComps.client  ?.set(clientVals);
+    filterComps.project ?.rebuild(projItems);
+    filterComps.project ?.set(toArr(filters.project));
+    filterComps.category?.set(toArr(filters.category));
+    filterComps.priority?.set(toArr(filters.priority));
+    filterComps.status  ?.set(toArr(filters.status));
+    $('filter-search').value = filters.search || '';
     currentVariantId = variant.id;
     updateVariantBtn();
     setView(variant.view || 'list');
@@ -337,9 +342,9 @@ const App = (() => {
       columnOrder: [...DEFAULT_OPTIONS.columnOrder],
     };
     filters = {};
-    ['filter-client','filter-project','filter-category','filter-priority','filter-status','filter-search']
-      .forEach(id => { const el = $(id); if (el) el.value = ''; });
-    _refreshProjectsFilter('');
+    Object.values(filterComps).forEach(c => c?.reset());
+    filterComps.project?.rebuild(state.projects.map(p => ({ value: p.id, label: p.name })));
+    $('filter-search').value = '';
     currentVariantId = null;
     updateVariantBtn();
     renderView();
@@ -549,51 +554,102 @@ const App = (() => {
     overlay.appendChild(modal);
   }
 
+  // ── Multi-select filter component ────────────────────────────────────────
+  function makeMultiFilter(containerId, defaultLabel, items, onChange) {
+    const container = $(containerId);
+    if (!container) return null;
+    container.innerHTML = '';
+
+    let selected = [];
+    let currentItems = [...items].sort((a, b) => a.label.localeCompare(b.label, 'fr'));
+
+    const btn = document.createElement('button');
+    btn.className = 'mf-btn';
+    const lbl = document.createElement('span'); lbl.className = 'mf-lbl';
+    const chev = document.createElement('span'); chev.className = 'mf-chev'; chev.textContent = '▾';
+    btn.append(lbl, chev);
+    container.appendChild(btn);
+
+    function updateBtn() {
+      if (!selected.length) { lbl.textContent = defaultLabel; btn.classList.remove('active'); }
+      else if (selected.length === 1) { lbl.textContent = currentItems.find(i => i.value === selected[0])?.label || selected[0]; btn.classList.add('active'); }
+      else { lbl.textContent = `${selected.length} sélectionnés`; btn.classList.add('active'); }
+    }
+    updateBtn();
+
+    function openPanel() {
+      const existing = container.querySelector('.mf-panel');
+      if (existing) { existing.remove(); return; }
+      const panel = document.createElement('div');
+      panel.className = 'mf-panel';
+      currentItems.forEach(item => {
+        const row = document.createElement('label');
+        row.className = 'mf-item' + (selected.includes(item.value) ? ' active' : '');
+        const cb = document.createElement('input');
+        cb.type = 'checkbox'; cb.value = item.value; cb.checked = selected.includes(item.value);
+        cb.addEventListener('change', () => {
+          selected = cb.checked ? [...selected, item.value] : selected.filter(v => v !== item.value);
+          row.classList.toggle('active', cb.checked);
+          updateBtn();
+          onChange([...selected]);
+        });
+        row.append(cb, ' ' + item.label);
+        panel.appendChild(row);
+      });
+      container.appendChild(panel);
+      const close = e => { if (!container.contains(e.target)) { panel.remove(); document.removeEventListener('click', close, true); } };
+      setTimeout(() => document.addEventListener('click', close, true), 0);
+    }
+
+    btn.addEventListener('click', openPanel);
+
+    return {
+      get: () => [...selected],
+      set: vals => { selected = [...(vals || [])].filter(v => currentItems.some(i => i.value === v)); updateBtn(); },
+      reset: () => { selected = []; updateBtn(); container.querySelector('.mf-panel')?.remove(); },
+      rebuild: (newItems, keepSel = false) => {
+        currentItems = [...newItems].sort((a, b) => a.label.localeCompare(b.label, 'fr'));
+        if (!keepSel) { selected = selected.filter(v => currentItems.some(i => i.value === v)); }
+        updateBtn();
+        const panel = container.querySelector('.mf-panel');
+        if (panel) { panel.remove(); openPanel(); }
+      },
+    };
+  }
+
   // ── Filtres ──────────────────────────────────────────────────────────────────
   function buildFilterBar() {
-    const clientSel  = $('filter-client');
-    const projectSel = $('filter-project');
+    const clientItems = () => state.clients.map(c => ({ value: c.id, label: c.name }));
+    const projItems   = (clientVals = []) => state.projects
+      .filter(p => !clientVals.length || clientVals.includes(p.clientId))
+      .map(p => ({ value: p.id, label: p.name }));
 
-    // Clients
-    clientSel.innerHTML = '<option value="">Tous les clients</option>';
-    state.clients.forEach(c => {
-      const o = document.createElement('option');
-      o.value = c.id; o.textContent = c.name;
-      clientSel.appendChild(o);
-    });
-
-    // Projects — expose as module-level function for applyVariant
-    _refreshProjectsFilter = function(clientId) {
-      projectSel.innerHTML = '<option value="">Tous les projets</option>';
-      state.projects
-        .filter(p => !clientId || p.clientId === clientId)
-        .forEach(p => {
-          const o = document.createElement('option');
-          o.value = p.id; o.textContent = p.name;
-          projectSel.appendChild(o);
-        });
-    };
-    _refreshProjectsFilter('');
-
-    clientSel.addEventListener('change', () => {
-      filters.client = clientSel.value || null;
+    filterComps.client = makeMultiFilter('filter-client', 'Tous les clients', clientItems(), vals => {
+      filters.client = vals.length ? vals : null;
       filters.project = null;
-      projectSel.value = '';
-      _refreshProjectsFilter(clientSel.value);
-      renderView();
-    });
-    projectSel.addEventListener('change', () => {
-      filters.project = projectSel.value || null;
+      filterComps.project?.rebuild(projItems(vals));
       renderView();
     });
 
-    ['filter-category', 'filter-priority', 'filter-status'].forEach(id => {
-      $(id).addEventListener('change', e => {
-        const key = id.replace('filter-', '');
-        filters[key] = e.target.value || null;
-        renderView();
-      });
+    filterComps.project = makeMultiFilter('filter-project', 'Tous les projets', projItems(), vals => {
+      filters.project = vals.length ? vals : null;
+      renderView();
     });
+
+    filterComps.category = makeMultiFilter('filter-category', 'Toutes les catégories',
+      CATEGORIES.map(c => ({ value: c, label: c })), vals => {
+        filters.category = vals.length ? vals : null; renderView();
+      });
+
+    filterComps.priority = makeMultiFilter('filter-priority', 'Toutes priorités',
+      PRIORITIES.map(p => ({ value: p, label: p })), vals => {
+        filters.priority = vals.length ? vals : null; renderView();
+      });
+
+    filterComps.status = makeMultiFilter('filter-status', 'Tous les statuts',
+      STATUSES.map(s => ({ value: s, label: s })), vals => {
+        filters.status = vals.length ? vals : null; renderView();
+      });
 
     $('filter-search').addEventListener('input', e => {
       filters.search = e.target.value.trim() || null;
@@ -602,9 +658,9 @@ const App = (() => {
 
     $('filter-reset').addEventListener('click', () => {
       filters = {};
-      ['filter-client','filter-project','filter-category','filter-priority','filter-status','filter-search']
-        .forEach(id => { const el = $(id); if (el) el.value = ''; });
-      _refreshProjectsFilter('');
+      Object.values(filterComps).forEach(c => c?.reset());
+      filterComps.project?.rebuild(projItems());
+      $('filter-search').value = '';
       currentVariantId = null;
       updateVariantBtn();
       renderView();

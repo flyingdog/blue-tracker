@@ -293,14 +293,16 @@ const Views = (() => {
   const STATUS_ORDER = { 'Bloqué': 0, 'En cours': 1, 'À faire': 2, 'Terminé': 3 };
 
   function filterTasks(tasks, state, filters) {
+    // Normalize: accept both legacy string values and new arrays
+    const arr = v => Array.isArray(v) ? v : (v ? [v] : []);
     return tasks.filter(t => {
       const proj = state.projects.find(p => p.id === t.projectId);
       if (!proj) return false;
-      if (filters.client   && proj.clientId !== filters.client)   return false;
-      if (filters.project  && t.projectId   !== filters.project)  return false;
-      if (filters.category && t.category    !== filters.category) return false;
-      if (filters.priority && t.priority    !== filters.priority) return false;
-      if (filters.status   && t.status      !== filters.status)   return false;
+      if (arr(filters.client).length   && !arr(filters.client).includes(proj.clientId))  return false;
+      if (arr(filters.project).length  && !arr(filters.project).includes(t.projectId))   return false;
+      if (arr(filters.category).length && !arr(filters.category).includes(t.category))   return false;
+      if (arr(filters.priority).length && !arr(filters.priority).includes(t.priority))   return false;
+      if (arr(filters.status).length   && !arr(filters.status).includes(t.status))       return false;
       if (filters.search) {
         const q = filters.search.toLowerCase();
         if (!t.name.toLowerCase().includes(q)) return false;
