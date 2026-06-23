@@ -592,21 +592,9 @@ const Views = (() => {
     const board = document.createElement('div');
     board.className = 'kanban-board';
 
+    const filteredTasks = filterTasks(state.tasks, state, filters);
     STATUSES.forEach(status => {
-      let tasks = state.tasks.filter(t => {
-        if (t.status !== status) return false;
-        const proj = state.projects.find(p => p.id === t.projectId);
-        if (!proj) return false;
-        if (filters.client && proj.clientId !== filters.client) return false;
-        if (filters.project && t.projectId !== filters.project) return false;
-        if (filters.category && t.category !== filters.category) return false;
-        if (filters.priority && t.priority !== filters.priority) return false;
-        if (filters.search) {
-          const q = filters.search.toLowerCase();
-          if (!t.name.toLowerCase().includes(q)) return false;
-        }
-        return true;
-      });
+      let tasks = filteredTasks.filter(t => t.status === status);
 
       const col = document.createElement('div');
       col.className = `kanban-col col-${STATUS_CLASS[status]}`;
@@ -629,21 +617,30 @@ const Views = (() => {
   function renderHierarchy(container, state, filters) {
     container.innerHTML = '';
 
+    const arr = v => Array.isArray(v) ? v : (v ? [v] : []);
+    const filteredTasks = filterTasks(state.tasks, state, filters);
+    const filteredTaskIds = new Set(filteredTasks.map(t => t.id));
+
+    // Keep only clients that have at least one visible task
+    const clientVals = arr(filters.client);
     const clients = state.clients.filter(c => {
-      if (filters.client && c.id !== filters.client) return false;
-      return true;
+      if (clientVals.length && !clientVals.includes(c.id)) return false;
+      return state.projects.some(p => p.clientId === c.id &&
+        state.tasks.some(t => t.projectId === p.id && filteredTaskIds.has(t.id)));
     });
 
     if (!clients.length) {
-      container.innerHTML = '<p class="empty-state">Aucun client à afficher.</p>';
+      container.innerHTML = '<p class="empty-state">Aucun résultat pour ces filtres.</p>';
       return;
     }
 
     clients.forEach(client => {
+      const projVals = arr(filters.project);
       const projects = state.projects.filter(p => {
         if (p.clientId !== client.id) return false;
-        if (filters.project && p.id !== filters.project) return false;
-        return true;
+        if (projVals.length && !projVals.includes(p.id)) return false;
+        // Only show project if it has at least one visible task
+        return state.tasks.some(t => t.projectId === p.id && filteredTaskIds.has(t.id));
       });
 
       const clientNode = document.createElement('div');
@@ -670,17 +667,7 @@ const Views = (() => {
       const clientBody = clientNode.querySelector('.tree-client-body');
 
       projects.forEach(proj => {
-        const tasks = state.tasks.filter(t => {
-          if (t.projectId !== proj.id) return false;
-          if (filters.category && t.category !== filters.category) return false;
-          if (filters.priority && t.priority !== filters.priority) return false;
-          if (filters.status && t.status !== filters.status) return false;
-          if (filters.search) {
-            const q = filters.search.toLowerCase();
-            if (!t.name.toLowerCase().includes(q)) return false;
-          }
-          return true;
-        });
+        const tasks = filteredTasks.filter(t => t.projectId === proj.id);
 
         const projNode = document.createElement('div');
         projNode.className = 'tree-project';
