@@ -188,7 +188,8 @@ const Views = (() => {
       });
       seg.addEventListener('click', e => {
         e.stopPropagation();
-        const newVal = val === i * 10 ? 0 : i * 10;
+        const current = task.progress || 0;
+        const newVal = current === i * 10 ? 0 : i * 10;
         App.updateTaskField(task.id, 'progress', newVal);
         task.progress = newVal;
         wrap.querySelectorAll('.pb-seg').forEach((s, idx) => s.classList.toggle('filled', newVal >= (idx + 1) * 10));
