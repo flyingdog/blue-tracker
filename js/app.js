@@ -697,6 +697,10 @@ const App = (() => {
             <input name="deadline" type="date" value="${task?.deadline || ''}">
           </div>
         </div>
+        <div class="td-field td-progress-field">
+          <label class="td-field-label">Avancement</label>
+          <div class="td-progress-wrap" id="td-progress-wrap"></div>
+        </div>
         <hr class="td-divider">
         <div class="td-field">
           <div class="notes-editor-header">
@@ -754,6 +758,13 @@ const App = (() => {
     colorSelect(form.querySelector('[name="category"]'), 'category');
     colorSelect(form.querySelector('[name="priority"]'),  'priority');
     colorSelect(form.querySelector('[name="status"]'),    'status');
+
+    // Barre de progression dans le détail
+    const progressWrap = container.querySelector('#td-progress-wrap');
+    if (progressWrap && !isNew) {
+      const pbFrag = Views.progressBarLg(task);
+      progressWrap.appendChild(pbFrag);
+    }
 
     // Bouton focus dans le détail
     const focusBtn = container.querySelector('#td-focus-btn');

@@ -163,6 +163,49 @@ const Views = (() => {
     return state.projects.find(p => p.id === projectId)?.name || '—';
   }
 
+  // ── Barre de progression ─────────────────────────────────────────────────
+  function progressBar(task, size = 'sm') {
+    const val = task.progress || 0;
+    const wrap = document.createElement('div');
+    wrap.className = `progress-bar progress-bar-${size}`;
+    wrap.title = `Avancement : ${val}%`;
+
+    for (let i = 1; i <= 10; i++) {
+      const seg = document.createElement('span');
+      seg.className = 'pb-seg' + (val >= i * 10 ? ' filled' : '');
+      seg.addEventListener('mouseenter', () => {
+        wrap.querySelectorAll('.pb-seg').forEach((s, idx) => s.classList.toggle('hover-preview', idx < i));
+      });
+      seg.addEventListener('mouseleave', () => {
+        wrap.querySelectorAll('.pb-seg').forEach(s => s.classList.remove('hover-preview'));
+      });
+      seg.addEventListener('click', e => {
+        e.stopPropagation();
+        const newVal = val === i * 10 ? (i - 1) * 10 : i * 10;
+        App.updateTaskField(task.id, 'progress', newVal);
+        task.progress = newVal;
+        wrap.querySelectorAll('.pb-seg').forEach((s, idx) => s.classList.toggle('filled', newVal >= (idx + 1) * 10));
+        wrap.title = `Avancement : ${newVal}%`;
+        if (size === 'lg') {
+          const lbl = wrap.nextElementSibling;
+          if (lbl?.classList.contains('pb-label')) lbl.textContent = `${newVal}%`;
+        }
+      });
+      wrap.appendChild(seg);
+    }
+    return wrap;
+  }
+
+  function progressBarLg(task) {
+    const frag = document.createDocumentFragment();
+    frag.appendChild(progressBar(task, 'lg'));
+    const lbl = document.createElement('span');
+    lbl.className = 'pb-label';
+    lbl.textContent = `${task.progress || 0}%`;
+    frag.appendChild(lbl);
+    return frag;
+  }
+
   // ── Task card (shared) ────────────────────────────────────────────────────
   function taskCard(task, state, opts = {}) {
     const color = clientColor(state, task.projectId);
@@ -223,6 +266,7 @@ const Views = (() => {
     }
 
     card.appendChild(header);
+    card.appendChild(progressBar(task));
     if (opts.showBadges !== false) {
       const badgeRow = document.createElement('div');
       badgeRow.className = 'card-badges';
@@ -382,6 +426,8 @@ const Views = (() => {
       nameLine.appendChild(badge);
     }
     nameCell.appendChild(nameLine);
+    nameCell.appendChild(progressBar(task));
+
     if (task.notes) {
       const notesEl = document.createElement('div');
       notesEl.className = 'task-notes';
@@ -740,7 +786,7 @@ const Views = (() => {
     treeFlagBtn.textContent = '☀';
     treeFlagBtn.addEventListener('click', e => { e.stopPropagation(); App.toggleDailyFlag(task.id); });
 
-    row.append(dot, name, catSel, prioSel, statusSel, treeFlagBtn);
+    row.append(dot, name, catSel, prioSel, statusSel, progressBar(task), treeFlagBtn);
 
     {
       const dlInput = document.createElement('input');
@@ -837,5 +883,5 @@ const Views = (() => {
     container.appendChild(wrap);
   }
 
-  return { renderList, renderKanban, renderHierarchy, renderFocus };
+  return { renderList, renderKanban, renderHierarchy, renderFocus, progressBarLg };
 })();

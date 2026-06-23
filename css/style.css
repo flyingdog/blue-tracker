@@ -526,6 +526,39 @@ a { color: inherit; text-decoration: none; }
 }
 .list-nav-btn:hover { background: var(--blue-light); color: var(--blue); }
 
+/* ── Barre de progression ────────────────────────────────────────────────── */
+.progress-bar {
+  display: flex;
+  gap: 2px;
+  cursor: pointer;
+  border-radius: 3px;
+  overflow: hidden;
+}
+.progress-bar-sm { height: 5px; margin-top: 4px; }
+.progress-bar-lg { height: 12px; flex: 1; border-radius: 4px; }
+.pb-seg {
+  flex: 1;
+  background: var(--gray-200);
+  transition: background .1s;
+}
+.pb-seg.filled { background: var(--blue); }
+.pb-seg.hover-preview { background: var(--blue-mid); opacity: .55; }
+.pb-seg.filled.hover-preview { opacity: .75; }
+.td-progress-wrap {
+  display: flex;
+  align-items: center;
+  gap: .6rem;
+  margin-top: .25rem;
+}
+.pb-label {
+  font-size: .82rem;
+  font-weight: 600;
+  color: var(--blue);
+  min-width: 36px;
+  text-align: right;
+}
+.td-progress-field { padding-bottom: .25rem; }
+
 /* ── Daily flag button (liste) ──────────────────────────────────────────── */
 .list-flag-btn {
   width: 28px; height: 28px; flex-shrink: 0;
