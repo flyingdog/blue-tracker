@@ -164,10 +164,17 @@ const Views = (() => {
   }
 
   // ── Barre de progression ─────────────────────────────────────────────────
+  function pbColorClass(val) {
+    if (val === 100) return 'pb-c-done';
+    if (val >= 70)   return 'pb-c-high';
+    if (val >= 40)   return 'pb-c-medium';
+    return val > 0 ? 'pb-c-low' : '';
+  }
+
   function progressBar(task, size = 'sm') {
     const val = task.progress || 0;
     const wrap = document.createElement('div');
-    wrap.className = `progress-bar progress-bar-${size}`;
+    wrap.className = `progress-bar progress-bar-${size} ${pbColorClass(val)}`.trim();
     wrap.title = `Avancement : ${val}%`;
 
     for (let i = 1; i <= 10; i++) {
@@ -185,6 +192,7 @@ const Views = (() => {
         App.updateTaskField(task.id, 'progress', newVal);
         task.progress = newVal;
         wrap.querySelectorAll('.pb-seg').forEach((s, idx) => s.classList.toggle('filled', newVal >= (idx + 1) * 10));
+        wrap.className = `progress-bar progress-bar-${size} ${pbColorClass(newVal)}`.trim();
         wrap.title = `Avancement : ${newVal}%`;
         if (size === 'lg') {
           const lbl = wrap.nextElementSibling;

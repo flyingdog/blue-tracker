@@ -534,15 +534,23 @@ a { color: inherit; text-decoration: none; }
   border-radius: 3px;
   overflow: hidden;
 }
-.progress-bar-sm { height: 5px; margin-top: 4px; }
+.progress-bar-sm { height: 5px; margin-top: 4px; max-width: 150px; }
 .progress-bar-lg { height: 12px; flex: 1; border-radius: 4px; }
 .pb-seg {
   flex: 1;
   background: var(--gray-200);
   transition: background .1s;
 }
-.pb-seg.filled { background: var(--blue); }
-.pb-seg.hover-preview { background: var(--blue-mid); opacity: .55; }
+/* Couleurs par niveau d'avancement */
+.pb-c-low    .pb-seg.filled { background: #EF4444; }
+.pb-c-medium .pb-seg.filled { background: #F59E0B; }
+.pb-c-high   .pb-seg.filled { background: var(--blue); }
+.pb-c-done   .pb-seg.filled { background: var(--green); }
+/* Hover preview — teinte légère de la couleur active */
+.pb-c-low    .pb-seg.hover-preview { background: #FCA5A5; }
+.pb-c-medium .pb-seg.hover-preview { background: #FCD34D; }
+.pb-c-high   .pb-seg.hover-preview { background: #93C5FD; }
+.pb-c-done   .pb-seg.hover-preview { background: #6EE7B7; }
 .pb-seg.filled.hover-preview { opacity: .75; }
 .td-progress-wrap {
   display: flex;
@@ -553,10 +561,13 @@ a { color: inherit; text-decoration: none; }
 .pb-label {
   font-size: .82rem;
   font-weight: 600;
-  color: var(--blue);
   min-width: 36px;
   text-align: right;
 }
+.pb-c-low    + .pb-label { color: #EF4444; }
+.pb-c-medium + .pb-label { color: #F59E0B; }
+.pb-c-high   + .pb-label { color: var(--blue); }
+.pb-c-done   + .pb-label { color: var(--green); }
 .td-progress-field { padding-bottom: .25rem; }
 
 /* ── Daily flag button (liste) ──────────────────────────────────────────── */
