@@ -1037,6 +1037,12 @@ a { color: inherit; text-decoration: none; }
 .list-cat     { font-size: .75rem; color: var(--gray-700); }
 .list-prio    { font-size: .75rem; font-weight: 600; }
 .list-deadline{ font-size: .75rem; color: var(--gray-700); }
+.deadline-display {
+  font-size: .75rem; color: var(--gray-700);
+  cursor: pointer; font-variant-numeric: tabular-nums;
+}
+.deadline-display:hover { text-decoration: underline; }
+.deadline-display.overdue { color: var(--red); font-weight: 600; }
 .deadline-input {
   border: none; background: transparent;
   font-size: .75rem; color: var(--gray-700);

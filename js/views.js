@@ -136,14 +136,54 @@ const Views = (() => {
     return '>1m';
   }
 
-  const _dateFmt = new Intl.DateTimeFormat(undefined, { day: '2-digit', month: '2-digit', year: '2-digit' });
+  // Always format dd/mm/yy regardless of browser locale
   function fmtDate(d) {
     if (!d) return '';
-    const [y, m, day] = d.split('-').map(Number);
-    return _dateFmt.format(new Date(y, m - 1, day));
+    const [y, m, day] = d.split('-');
+    return `${day}/${m}/${y.slice(2)}`;
   }
   const _numFmt = new Intl.NumberFormat(undefined);
   function fmtNumber(n) { return _numFmt.format(n); }
+
+  // Inline date: shows formatted text, switches to date input on click
+  function inlineDatePicker(taskId, deadline, overdue, onChange) {
+    const wrap = document.createElement('span');
+    wrap.style.display = 'inline-flex';
+
+    const lbl = document.createElement('span');
+    lbl.className = 'deadline-display' + (overdue ? ' overdue' : '');
+    lbl.textContent = deadline ? fmtDate(deadline) : '—';
+    lbl.style.cursor = 'pointer';
+
+    const inp = document.createElement('input');
+    inp.type = 'date';
+    inp.value = deadline || '';
+    inp.className = 'deadline-input' + (overdue ? ' overdue' : '');
+    inp.style.display = 'none';
+
+    lbl.addEventListener('click', () => {
+      lbl.style.display = 'none';
+      inp.style.display = '';
+      inp.focus();
+      inp.showPicker?.();
+    });
+    inp.addEventListener('change', e => {
+      const val = e.target.value || null;
+      onChange(val);
+      lbl.textContent = val ? fmtDate(val) : '—';
+      lbl.className = 'deadline-display' + (isOverdue(val, '') ? ' overdue' : '');
+      inp.style.display = 'none';
+      lbl.style.display = '';
+    });
+    inp.addEventListener('blur', () => {
+      inp.style.display = 'none';
+      lbl.style.display = '';
+    });
+
+    wrap.appendChild(lbl);
+    wrap.appendChild(inp);
+    return wrap;
+  }
 
   function isOverdue(deadline, status) {
     if (!deadline || status === 'Terminé') return false;
@@ -266,16 +306,8 @@ const Views = (() => {
     footer.className = 'card-footer';
     footer.appendChild(categorySelect(task));
     footer.appendChild(prioritySelect(task));
-    {
-      const dlInput = document.createElement('input');
-      dlInput.type = 'date'; dlInput.value = task.deadline || '';
-      dlInput.className = 'deadline-input' + (isOverdue(task.deadline, task.status) ? ' overdue' : '');
-      dlInput.addEventListener('change', e => {
-        App.updateTaskField(task.id, 'deadline', e.target.value || null);
-        dlInput.classList.toggle('overdue', isOverdue(e.target.value, task.status));
-      });
-      footer.appendChild(dlInput);
-    }
+    footer.appendChild(inlineDatePicker(task.id, task.deadline, isOverdue(task.deadline, task.status),
+      val => App.updateTaskField(task.id, 'deadline', val)));
 
     card.appendChild(header);
     card.appendChild(progressBar(task));
@@ -483,16 +515,8 @@ const Views = (() => {
           break;
         case 'deadline': {
           c.className = `list-deadline${overdue ? ' overdue' : ''}`;
-          const dlInput = document.createElement('input');
-          dlInput.type = 'date'; dlInput.value = task.deadline || '';
-          dlInput.className = 'deadline-input' + (overdue ? ' overdue' : '');
-          dlInput.addEventListener('change', e => {
-            App.updateTaskField(task.id, 'deadline', e.target.value || null);
-            const od = isOverdue(e.target.value, task.status);
-            dlInput.classList.toggle('overdue', od);
-            c.classList.toggle('overdue', od);
-          });
-          c.appendChild(dlInput);
+          c.appendChild(inlineDatePicker(task.id, task.deadline, overdue,
+            val => { App.updateTaskField(task.id, 'deadline', val); c.classList.toggle('overdue', isOverdue(val, task.status)); }));
           break;
         }
         case 'updated':
@@ -789,16 +813,8 @@ const Views = (() => {
 
     row.append(dot, name, catSel, prioSel, statusSel, progressBar(task), treeFlagBtn);
 
-    {
-      const dlInput = document.createElement('input');
-      dlInput.type = 'date'; dlInput.value = task.deadline || '';
-      dlInput.className = 'deadline-input' + (overdue ? ' overdue' : '');
-      dlInput.addEventListener('change', e => {
-        App.updateTaskField(task.id, 'deadline', e.target.value || null);
-        dlInput.classList.toggle('overdue', isOverdue(e.target.value, task.status));
-      });
-      row.appendChild(dlInput);
-    }
+    row.appendChild(inlineDatePicker(task.id, task.deadline, overdue,
+      val => App.updateTaskField(task.id, 'deadline', val)));
 
     return row;
   }
