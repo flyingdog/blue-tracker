@@ -136,11 +136,14 @@ const Views = (() => {
     return '>1m';
   }
 
+  const _dateFmt = new Intl.DateTimeFormat(undefined, { day: '2-digit', month: '2-digit', year: '2-digit' });
   function fmtDate(d) {
     if (!d) return '';
-    const [y, m, day] = d.split('-');
-    return `${day}/${m}/${y}`;
+    const [y, m, day] = d.split('-').map(Number);
+    return _dateFmt.format(new Date(y, m - 1, day));
   }
+  const _numFmt = new Intl.NumberFormat(undefined);
+  function fmtNumber(n) { return _numFmt.format(n); }
 
   function isOverdue(deadline, status) {
     if (!deadline || status === 'Terminé') return false;
@@ -851,7 +854,7 @@ const Views = (() => {
         <div class="focus-card-badges">
           <span class="inline-select s-${STATUS_CLASS_LOCAL[task.status] || 'todo'}" style="font-size:.72rem;padding:.1rem .4rem">${task.status}</span>
           ${isReported ? '<span class="focus-reported-badge">↩ reporté</span>' : ''}
-          ${task.deadline ? `<span style="font-size:.72rem;color:var(--gray-500)">${task.deadline}</span>` : ''}
+          ${task.deadline ? `<span style="font-size:.72rem;color:var(--gray-500)">${fmtDate(task.deadline)}</span>` : ''}
         </div>
       `;
 
