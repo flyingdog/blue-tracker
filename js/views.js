@@ -21,7 +21,7 @@ const LIST_COLS = [
 
 const Views = (() => {
 
-  const STATUSES   = ['À faire', 'En cours', 'Bloqué', 'Terminé'];
+  const STATUSES   = ['À faire', 'En cours', 'En attente', 'Bloqué', 'Terminé'];
   const CATEGORIES = ['Atelier', 'Spec', 'Investigation', 'Données', 'Dév', 'Admin', 'Réunion', 'Autre'];
   const PRIORITIES = ['Haute', 'Moyenne', 'Basse'];
   const CODE_PALETTE = ['#3B82F6','#8B5CF6','#EC4899','#F59E0B','#10B981','#0EA5E9','#6366F1','#14B8A6','#EF4444','#84CC16'];
@@ -45,7 +45,7 @@ const Views = (() => {
     return el;
   }
   const STATUS_CLASS = {
-    'À faire': 'todo', 'En cours': 'inprogress', 'Bloqué': 'blocked', 'Terminé': 'done'
+    'À faire': 'todo', 'En cours': 'inprogress', 'En attente': 'waiting', 'Bloqué': 'blocked', 'Terminé': 'done'
   };
   const PRIORITY_CLASS = { 'Haute': 'high', 'Moyenne': 'medium', 'Basse': 'low' };
   const CAT_CLASS = {
@@ -802,7 +802,7 @@ const Views = (() => {
 
   function renderFocus(container, state, actions) {
     const today  = todayStr();
-    const STATUS_CLASS_LOCAL = { 'À faire': 'todo', 'En cours': 'inprogress', 'Bloqué': 'blocked', 'Terminé': 'done' };
+    const STATUS_CLASS_LOCAL = { 'À faire': 'todo', 'En cours': 'inprogress', 'En attente': 'waiting', 'Bloqué': 'blocked', 'Terminé': 'done' };
     const PRIO_COLOR = { 'Haute': 'var(--red)', 'Moyenne': 'var(--orange)', 'Basse': 'var(--gray-500)' };
 
     const flagged = state.tasks.filter(t => t.daily_flag);

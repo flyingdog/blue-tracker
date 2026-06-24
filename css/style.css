@@ -25,6 +25,7 @@
   --s-todo:       #9DA8B2;
   --s-inprogress: #2B7DD4;
   --s-blocked:    #D94040;
+  --s-waiting:    #D97706;
   --s-done:       #1D9E75;
 
   /* priority colors */
@@ -824,6 +825,7 @@ a { color: inherit; text-decoration: none; }
 .s-todo       { background: #F1F3F5; color: var(--s-todo); }
 .s-inprogress { background: #EBF2FA; color: var(--s-inprogress); }
 .s-blocked    { background: #FDF0F0; color: var(--s-blocked); }
+.s-waiting    { background: #FEF3C7; color: var(--s-waiting); }
 .s-done       { background: #EDFAF5; color: var(--s-done); }
 
 .prio-high   { color: var(--p-high); }
@@ -1095,6 +1097,7 @@ a { color: inherit; text-decoration: none; }
 .col-todo       .kanban-col-header { border-top: 3px solid var(--s-todo); }
 .col-inprogress .kanban-col-header { border-top: 3px solid var(--s-inprogress); }
 .col-blocked    .kanban-col-header { border-top: 3px solid var(--s-blocked); }
+.col-waiting    .kanban-col-header { border-top: 3px solid var(--s-waiting); }
 .col-done       .kanban-col-header { border-top: 3px solid var(--s-done); }
 
 .kanban-cards {
@@ -1242,6 +1245,7 @@ a { color: inherit; text-decoration: none; }
 .tree-task-status.s-todo       { background: var(--s-todo); }
 .tree-task-status.s-inprogress { background: var(--s-inprogress); }
 .tree-task-status.s-blocked    { background: var(--s-blocked); }
+.tree-task-status.s-waiting    { background: var(--s-waiting); }
 .tree-task-status.s-done       { background: var(--s-done); }
 .tree-task-name     { flex: 1; }
 .tree-task-cat      { font-size: .72rem; color: var(--gray-500); }
@@ -1458,6 +1462,7 @@ a { color: inherit; text-decoration: none; }
 .inline-select.s-todo       { background-color: #F1F3F5; color: #6B7280; }
 .inline-select.s-inprogress { background-color: #EBF2FA; color: var(--s-inprogress); }
 .inline-select.s-blocked    { background-color: #FDF0F0; color: var(--s-blocked); }
+.inline-select.s-waiting    { background-color: #FEF3C7; color: var(--s-waiting); }
 .inline-select.s-done       { background-color: #EDFAF5; color: var(--s-done); }
 
 /* Priorité */

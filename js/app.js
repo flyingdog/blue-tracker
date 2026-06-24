@@ -6,7 +6,7 @@ const App = (() => {
   const GAPI_CLIENT_ID = '720180178362-6d86hmjecmm45cpkeetadaeqja22agg0.apps.googleusercontent.com';
   const CATEGORIES = ['Atelier', 'Spec', 'Investigation', 'Données', 'Dév', 'Admin', 'Réunion', 'Autre'];
   const PRIORITIES = ['Haute', 'Moyenne', 'Basse'];
-  const STATUSES   = ['À faire', 'En cours', 'Bloqué', 'Terminé'];
+  const STATUSES   = ['À faire', 'En cours', 'En attente', 'Bloqué', 'Terminé'];
 
   const STATUS_CLASS   = { 'À faire': 'todo', 'En cours': 'inprogress', 'Bloqué': 'blocked', 'Terminé': 'done' };
   const PRIORITY_CLASS = { 'Haute': 'high', 'Moyenne': 'medium', 'Basse': 'low' };
